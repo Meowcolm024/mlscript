@@ -81,8 +81,8 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
   def ttp(trm: Term, desc: Str = ""): TypeProvenance =
     TypeProvenance(trm.toLoc, if (desc === "") trm.describe else desc)
   def originProv(loco: Opt[Loc], desc: Str): TypeProvenance = {
-    // TODO make a new sort of provenance for where types and type varianles are defined
-    // tp(loco, desc)
+    // TODO make a new sort of provenance for where types and type variables are defined
+    // tp(loco, desc, true)
     // ^ This yields unnatural errors like:
       //│ ╟── expression of type `B` is not a function
       //│ ║  l.6: 	    method Map[B]: B -> A
@@ -408,7 +408,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
                     expandType(tr, true).show
                   }, but is defined as ${
                     expandType(TypeRef(defn, td.targs)(noProv, ctx), true).show
-                  }", td.toLoc)(raise, noProv)
+                  }", td.toLoc)(raise)
                 false
               } else true
           }
@@ -560,7 +560,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
     val typeType = ()
     def typeNamed(loc: Opt[Loc], name: Str): (() => ST) \/ TypeDef =
       ctx.tyDefs.get(name).toRight(() =>
-        err("type identifier not found: " + name, loc)(raise, tp(loc, "missing type")))
+        err("type identifier not found: " + name, loc)(raise))
     val localVars = mutable.Map.empty[TypeVar, TypeVariable]
     def rec(ty: Type)(implicit ctx: Ctx, recVars: Map[TypeVar, TypeVariable]): SimpleType = ty match {
       case Top => ExtrType(false)(tp(ty.toLoc, "top type"))
@@ -583,12 +583,12 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
         val prov = tp(ty.toLoc, "record type")
         fs.groupMap(_._1.name)(_._1).foreach { case s -> fieldNames if fieldNames.size > 1 => err(
             msg"Multiple declarations of field name ${s} in ${prov.desc}" -> ty.toLoc
-              :: fieldNames.map(tp => msg"Declared at" -> tp.toLoc))(raise, prov)
+              :: fieldNames.map(tp => msg"Declared at" -> tp.toLoc))(raise)
           case _ =>
         }
         RecordType.mk(fs.map { nt =>
           if (nt._1.name.head.isUpper)
-            err(msg"Field identifiers must start with a small letter", nt._1.toLoc)(raise, prov)
+            err(msg"Field identifiers must start with a small letter", nt._1.toLoc)(raise)
           nt._1 -> rec(nt._2)
         })(prov)
       case Function(lhs, rhs) => FunctionType(rec(lhs), rec(rhs))(tp(ty.toLoc, "function type"))
@@ -602,7 +602,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
           typeNamed(tyLoc, name) match {
             case R(td) =>
               if (td.tparams.nonEmpty) {
-                err(msg"Type $name takes parameters", tyLoc)(raise, tpr)
+                err(msg"Type $name takes parameters", tyLoc)(raise)
               } else TypeRef(td, Nil)(tpr, ctx)
             case L(e) =>
               if (name.isEmpty || !name.head.isLower) e()
@@ -611,7 +611,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
                   case Cls => clsNameToNomTag(td)(tp(tyLoc, "class tag"), ctx)
                   case Trt => trtNameToNomTag(td)(tp(tyLoc, "trait tag"), ctx)
                   case Als => err(
-                    msg"Type alias ${name.capitalize} cannot be used as a type tag", tyLoc)(raise, tpr)
+                    msg"Type alias ${name.capitalize} cannot be used as a type tag", tyLoc)(raise)
                 }
                 case L(_) => e()
               }
@@ -629,7 +629,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
             val tpnum = td.tparams.size
             val realTargs = if (targs.size === tpnum) targs.map(rec) else {
               err(msg"Wrong number of type arguments – expected ${tpnum.toString}, found ${
-                  targs.size.toString}", ty.toLoc)(raise, prov)
+                  targs.size.toString}", ty.toLoc)(raise)
               (targs.iterator.map(rec) ++ Iterator.continually(freshVar(noProv))).take(tpnum).toList
             }
             TypeRef(td, realTargs)(prov, ctx)
@@ -656,7 +656,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
     case Def(false, Var("_"), L(rhs)) => typeStatement(rhs, allowPure)
     case Def(isrec, nme, L(rhs)) => // TODO reject R(..)
       if (nme.name === "_")
-        err(msg"Illegal definition name: ${nme.name}", nme.toLoc)(raise, noProv)
+        err(msg"Illegal definition name: ${nme.name}", nme.toLoc)(raise)
       val ty_sch = typeLetRhs(isrec, nme.name, rhs)
       ctx += nme.name -> ty_sch
       R(nme.name -> ty_sch :: Nil)
@@ -683,7 +683,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
       }
       L(PolymorphicType(0, ty))
     case _ =>
-      err(msg"Illegal position for this ${s.describe} statement.", s.toLoc)(raise, noProv)
+      err(msg"Illegal position for this ${s.describe} statement.", s.toLoc)(raise)
       R(Nil)
   }
   
@@ -713,7 +713,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
     def unapply(v: Var)(implicit raise: Raise): S[Str] = S {
       if (reservedNames(v.name))
         err(s"Illegal use of ${if (v.name.head.isLetter) "keyword" else "operator"}: " + v.name,
-          v.toLoc)(raise, ttp(v))
+          v.toLoc)(raise)
       v.name
     }
   }
@@ -800,12 +800,12 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
         val prov = tp(term.toLoc, "record literal")
         fs.groupMap(_._1.name)(_._1).foreach { case s -> fieldNames if fieldNames.size > 1 => err(
             msg"Multiple declarations of field name ${s} in ${prov.desc}" -> term.toLoc
-              :: fieldNames.map(tp => msg"Declared at" -> tp.toLoc))(raise, prov)
+              :: fieldNames.map(tp => msg"Declared at" -> tp.toLoc))(raise)
           case _ =>
         }
         RecordType.mk(fs.map { case (n, t) => 
           if (n.name.head.isUpper)
-            err(msg"Field identifiers must start with a small letter", term.toLoc)(raise, prov)
+            err(msg"Field identifiers must start with a small letter", term.toLoc)(raise)
           (n, typeTerm(t))
         })(prov)
       case tup: Tup if funkyTuples =>
@@ -822,7 +822,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
       case Blk(Nil) => UnitType
       case pat if ctx.inPattern =>
         err(msg"Unsupported pattern shape${
-          if (dbg) " ("+pat.getClass.toString+")" else ""}:", pat.toLoc)(raise, ttp(pat))
+          if (dbg) " ("+pat.getClass.toString+")" else ""}:", pat.toLoc)(raise)
       case Lam(pat, body) =>
         val newBindings = mutable.Map.empty[Str, TypeVariable]
         val newCtx = ctx.nest
@@ -941,12 +941,12 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool) extend
           val tpr = tp(pat.toLoc, "type pattern")
           ctx.tyDefs.get(nme) match {
             case None =>
-              err("type identifier not found: " + nme, pat.toLoc)(raise, tpr)
+              err("type identifier not found: " + nme, pat.toLoc)(raise)
               val e = ClassTag(ErrTypeId, Set.empty)(tpr)
               return ((e -> e) :: Nil) -> e
             case Some(td) =>
               td.kind match {
-                case Als => err(msg"can only match on classes and traits", pat.toLoc)(raise, tpr)
+                case Als => err(msg"can only match on classes and traits", pat.toLoc)(raise)
                 case Cls => clsNameToNomTag(td)(tp(pat.toLoc, "class pattern"), ctx)
                 case Trt => trtNameToNomTag(td)(tp(pat.toLoc, "trait pattern"), ctx)
               }
