@@ -383,12 +383,12 @@ class ConstraintSolver extends NormalForms { self: Typer =>
       
       val tighestLocatedRHS = cctx.flatMap { subCtx =>
         subCtx.flatMap { case (l, r) =>
-          val considered = (true, r, r.prov) :: Nil
-          considered.filter { case (isMainProv, _, p) =>
+          val considered =  (r, r.prov) :: Nil
+          considered.filter { case (_, p) =>
             p.loco =/= prov.loco && (p.loco match {
               case Some(loco) =>
                 !shownLocs(loco) &&
-                (verboseConstraintProvenanceHints && isMainProv || !shownLocs.exists(loco touches _)) && {
+                (verboseConstraintProvenanceHints || !shownLocs.exists(loco touches _)) && {
                   shownLocs += loco
                   true
                 }
@@ -399,13 +399,11 @@ class ConstraintSolver extends NormalForms { self: Typer =>
       }
       
       var first = true
-      val constraintProvenanceHints = tighestLocatedRHS.map { case (isMainProv, r, p) =>
-        if (isMainProv) {
+      val constraintProvenanceHints = tighestLocatedRHS.map { case (r, p) =>
           val msgHead = if (first) msg"Note: constraint arises " else msg""
           first = false
           msg"${msgHead}from ${p.desc}:" -> p.loco
-        }
-        else msg"in the context of ${p.desc}" -> p.loco
+        //was supposed to be printed when it was not a mainProv msg"in the context of ${p.desc}" -> p.loco
       }
       
       val msgs: Ls[Message -> Opt[Loc]] = List(
