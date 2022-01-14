@@ -19,20 +19,22 @@ T {}
 //│ ║  l.7: 	trait T: A & B
 //│ ╙──     	         ^
 //│ res: error | t
+//│    = {}
 
 def a = A{}
 //│ a: A
+//│  = A {}
 
 :e
 T a
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.27: 	T a
+//│ ║  l.29: 	T a
 //│ ║        	^^^
 //│ ╟── expression of type `A` does not match type `B`
-//│ ║  l.23: 	def a = A{}
+//│ ║  l.24: 	def a = A{}
 //│ ║        	        ^^^
 //│ ╟── but it flows into reference with expected type `B`
-//│ ║  l.27: 	T a
+//│ ║  l.29: 	T a
 //│ ║        	  ^
 //│ ╟── Note: constraint arises from type reference:
 //│ ║  l.7: 	trait T: A & B
@@ -41,9 +43,14 @@ T a
 //│ ║  l.1: 	class A
 //│ ╙──     	      ^
 //│ res: A & t | error
+//│    = A {}
 
 :e
+:js
 T A
+//│ // Query 1
+//│ res = ((x) => new A(x));
+//│ // End of generated code
 //│ ╔══[ERROR] Type mismatch in application:
 //│ ║  l.46: 	T A
 //│ ║        	^^^
@@ -57,6 +64,7 @@ T A
 //│ ║  l.1: 	class A
 //│ ╙──     	      ^
 //│ res: anything -> A & t | error
+//│    = [Function: res]
 
 :e
 T (B {})
@@ -73,18 +81,28 @@ T (B {})
 //│ ║  l.2: 	class B
 //│ ╙──     	      ^
 //│ res: B & t | error
+//│    = B {}
 
+:re
 def t = T error
 //│ t: nothing
+//│ Runtime error:
+//│   Error: unexpected runtime error
 
+:re
 t: nothing
 //│ res: nothing
+//│ Runtime error:
+//│   ReferenceError: t is not defined
 
 type Als = A & B
 //│ Defined type alias Als
 
+:re
 t: Als
 //│ res: nothing
+//│ Runtime error:
+//│   ReferenceError: t is not defined
 
 
 :e
@@ -105,9 +123,11 @@ trait S: { x: int }
 
 s = S{ x = 1 }
 //│ s: {x: 1} & s
+//│  = { x: 1 }
 
 t = s: s
 //│ t: s
+//│  = { x: 1 }
 
 :e
 t.x
@@ -121,10 +141,13 @@ t.x
 //│ ║  l.113: 	t.x
 //│ ╙──       	^
 //│ res: error
+//│    = 1
 
 t = s: S
 //│ t: {x: int} & s
+//│  = { x: 1 }
 
 t.x
 //│ res: int
+//│    = 1
 
