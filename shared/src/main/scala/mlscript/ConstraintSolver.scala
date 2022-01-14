@@ -341,7 +341,7 @@ class ConstraintSolver extends NormalForms { self: Typer =>
     def doesntMatch(ty: SimpleType) = msg"does not match type `${ty.expNeg}`"
     def doesntHaveField(n: Str) = msg"does not have field '$n'"
     def reportError(error: Message)(implicit cctx: ConCtx): Unit = {
-      val (lhs, rhs) = cctx.head.head
+      val (lhs, rhs) = cctx.head.head 
       println(s"CONSTRAINT FAILURE: $lhs <: $rhs")
       println(s"CTX: ${cctx.map(_.map(lr => s"${lr._1} <: ${lr._2} [${lr._1.prov}] [${lr._2.prov}]"))}")
       
@@ -361,7 +361,8 @@ class ConstraintSolver extends NormalForms { self: Typer =>
           }}.toList
         else Nil
       
-      val lhsProv = cctx.head.find(_._1.prov.loco.isDefined).map(_._1.prov).getOrElse(lhs.prov)
+      //provenance printed is the first one that is not an originProv
+      val lhsProv = cctx.head.find(l => l._1.prov.loco.isDefined && !l._1.prov.isOrigin).map(_._1.prov).getOrElse(lhs.prov)
       
       // TODO re-enable
       // assert(lhsProv.loco.isDefined) // TODO use soft assert
@@ -406,6 +407,21 @@ class ConstraintSolver extends NormalForms { self: Typer =>
         //was supposed to be printed when it was not a mainProv msg"in the context of ${p.desc}" -> p.loco
       }
       
+      val originProvList = cctx.flatMap{ subCtx =>
+        subCtx.iterator.flatMap { case (l,r) => 
+          //we only one origin prov for each subCtx
+          val considered = List(l optionIf (_.prov.isOrigin), r optionIf (_.prov.isOrigin)).flatten
+          considered
+        }.nextOption()
+      }
+
+      first = true
+      val originProvHints = originProvList.map { l => 
+        val msgHead = if (first) msg"Note: " else msg""
+          first = false
+          msg"${msgHead}Type ${l.prov.desc} is defined at: " -> l.prov.loco 
+      }
+
       val msgs: Ls[Message -> Opt[Loc]] = List(
         msg"Type mismatch in ${prov.desc}:" -> prov.loco :: Nil,
         msg"expression of type `${lhs.expPos}` $error" ->
@@ -438,6 +454,7 @@ class ConstraintSolver extends NormalForms { self: Typer =>
           (if (isSameType) Nil else msg"which $fail" -> N :: Nil)
         }.toList.flatten,
         constraintProvenanceHints,
+        originProvHints,
         detailedContext,
       ).flatten
       raise(TypeError(msgs))
