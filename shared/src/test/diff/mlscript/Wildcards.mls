@@ -10,7 +10,6 @@
 //│ ║  l.4: 	42: ?
 //│ ╙──     	    ^
 //│ res: anything
-//│    = 42
 
 def n: ?
 n = 42
@@ -18,12 +17,10 @@ n = 42
 //│ 42
 //│   <:  n:
 //│ anything
-//│  = 42
 
 
 def f x = x : ?
 //│ f: nothing -> anything
-//│  = [Function: f]
 
 class E[A]
 //│ Defined class E
@@ -31,11 +28,11 @@ class E[A]
 :e
 E{} : E[?]
 //│ ╔══[ERROR] Type mismatch in type ascription:
-//│ ║  l.32: 	E{} : E[?]
+//│ ║  l.29: 	E{} : E[?]
 //│ ║        	^^^
 //│ ╟── expression of type `anything` does not match type `nothing`
 //│ ╟── but it flows into application of type `?a`
-//│ ║  l.32: 	E{} : E[?]
+//│ ║  l.29: 	E{} : E[?]
 //│ ║        	^^^
 //│ ╟── which does not match type `E[?]`
 //│ ╟── Note: constraint arises from type wildcard:
@@ -45,7 +42,6 @@ E{} : E[?]
 //│ ║  l.25: 	class E[A]
 //│ ╙──      	        ^
 //│ res: E[?]
-//│    = E {}
 
 def e: E[?]
 def e = E{}
@@ -53,7 +49,6 @@ def e = E{}
 //│ E['A]
 //│   <:  e:
 //│ E[?]
-//│  = E {}
 
 
 type Als1[A] = int -> A
@@ -76,7 +71,6 @@ add 1 : Als1[?]
 //│ ║  l.54: 	type Als1[A] = int -> A
 //│ ╙──      	               ^^^^^^^^
 //│ res: int -> anything
-//│    = [Function (anonymous)]
 
 def a1: Als1[?]
 a1 = add 1
@@ -84,7 +78,6 @@ a1 = add 1
 //│ int -> int
 //│   <:  a1:
 //│ int -> anything
-//│   = [Function (anonymous)]
 
 
 type Als2[A] = A -> int
@@ -99,7 +92,6 @@ add 1 : Als2[?]
 //│ ║  l.87: 	add 1 : Als2[?]
 //│ ╙──      	             ^
 //│ res: nothing -> int
-//│    = [Function (anonymous)]
 
 def a2: Als2[?]
 a2 = add 1
@@ -107,7 +99,6 @@ a2 = add 1
 //│ int -> int
 //│   <:  a2:
 //│ nothing -> int
-//│   = [Function (anonymous)]
 
 
 def q: ?
@@ -117,7 +108,6 @@ q = 1
 //│ 1
 //│   <:  q:
 //│ anything
-//│  = 1
 
 :e
 q + 1
@@ -131,7 +121,6 @@ q + 1
 //│ ║  l.113: 	q + 1
 //│ ╙──       	^
 //│ res: error | int
-//│    = 2
 
 :e
 q q
@@ -145,6 +134,4 @@ q q
 //│ ║  l.126: 	q q
 //│ ╙──       	^
 //│ res: error
-//│ Runtime error:
-//│   TypeError: q is not a function
 

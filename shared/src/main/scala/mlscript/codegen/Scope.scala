@@ -75,18 +75,12 @@ class Scope(initialSymbols: Seq[Str], enclosing: Opt[Scope]) {
     name
   }
 
-  def emitTempVarDecls(): Opt[JSLetDecl] = if (tempVars.isEmpty) {
+  private def emitTempVarDecls(): Opt[JSLetDecl] = if (tempVars.isEmpty) {
     N
   } else {
     val decl = JSLetDecl.from(tempVars.toList)
     tempVars.clear()
     S(decl)
-  }
-
-  def getTempVars(): Ls[Str] = {
-    val vars = tempVars.toList
-    tempVars.clear()
-    vars
   }
 
   /**

@@ -11,13 +11,11 @@ def False: False
 
 True: Boolean
 //│ res: bool
-//│    = [Function: res]
 
 :e
 Boolean
 //│ ╔══[ERROR] identifier not found: Boolean
-//│ ║  l.17: 	Boolean
+//│ ║  l.16: 	Boolean
 //│ ╙──      	^^^^^^^
 //│ res: error
-//│    = [Function: Boolean]
 
