@@ -60,7 +60,10 @@ res.tail.head
 //│ ║        	          ^^^^^^
 //│ ╟── but it flows into reference with expected type `{tail: ?a}`
 //│ ║  l.54: 	res.tail.head
-//│ ╙──      	^^^
+//│ ║        	^^^
+//│ ╟── Note: Type class is defined at: 
+//│ ║  l.2: 	class Nil: {}
+//│ ╙──     	      ^^^
 //│ res: error
 
 
@@ -82,13 +85,13 @@ res.head
 :e
 Cons 1 res
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.83: 	Cons 1 res
+//│ ║  l.86: 	Cons 1 res
 //│ ║        	^^^^^^^^^^
 //│ ╟── expression of type `2` does not match type `Nil | Cons[?A]`
-//│ ║  l.76: 	Cons 2 Nil
+//│ ║  l.79: 	Cons 2 Nil
 //│ ║        	     ^
 //│ ╟── but it flows into reference with expected type `List[?A0]`
-//│ ║  l.83: 	Cons 1 res
+//│ ║  l.86: 	Cons 1 res
 //│ ║        	       ^^^
 //│ ╟── Note: constraint arises from union type:
 //│ ║  l.4: 	type List[A] = Nil | Cons[A]
@@ -97,7 +100,7 @@ Cons 1 res
 //│ ║  l.3: 	class Cons[A]: { head: A; tail: List[A] }
 //│ ║       	                                ^^^^^^^
 //│ ╟── from reference:
-//│ ║  l.69: 	def Cons head tail = originalCons { head; tail } with { head; tail }
+//│ ║  l.72: 	def Cons head tail = originalCons { head; tail } with { head; tail }
 //│ ╙──      	                                          ^^^^
 //│ res: (Cons['A .. 1 | 'A] with {head: 1, tail: 2}) | error
 

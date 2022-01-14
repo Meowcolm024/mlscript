@@ -37,6 +37,9 @@ E{} : E[?]
 //│ ╟── which does not match type `E[?]`
 //│ ╟── Note: constraint arises from type wildcard:
 //│ ║  l.29: 	E{} : E[?]
+//│ ║        	        ^
+//│ ╟── Note: Type class type parameter is defined at: 
+//│ ║  l.25: 	class E[A]
 //│ ╙──      	        ^
 //│ res: E[?]
 
@@ -54,18 +57,18 @@ type Als1[A] = int -> A
 :e
 add 1 : Als1[?]
 //│ ╔══[ERROR] Type mismatch in type ascription:
-//│ ║  l.55: 	add 1 : Als1[?]
+//│ ║  l.58: 	add 1 : Als1[?]
 //│ ║        	^^^^^
 //│ ╟── expression of type `int` does not match type `nothing`
 //│ ╟── but it flows into application of type `?a`
-//│ ║  l.55: 	add 1 : Als1[?]
+//│ ║  l.58: 	add 1 : Als1[?]
 //│ ║        	^^^^^
 //│ ╟── which does not match type `Als1[?]`
 //│ ╟── Note: constraint arises from type wildcard:
-//│ ║  l.55: 	add 1 : Als1[?]
+//│ ║  l.58: 	add 1 : Als1[?]
 //│ ║        	             ^
 //│ ╟── from function type:
-//│ ║  l.51: 	type Als1[A] = int -> A
+//│ ║  l.54: 	type Als1[A] = int -> A
 //│ ╙──      	               ^^^^^^^^
 //│ res: int -> anything
 
@@ -83,10 +86,10 @@ type Als2[A] = A -> int
 :e
 add 1 : Als2[?]
 //│ ╔══[ERROR] Type mismatch in type ascription:
-//│ ║  l.84: 	add 1 : Als2[?]
+//│ ║  l.87: 	add 1 : Als2[?]
 //│ ║        	^^^^^
 //│ ╟── expression of type `anything` does not match type `int`
-//│ ║  l.84: 	add 1 : Als2[?]
+//│ ║  l.87: 	add 1 : Als2[?]
 //│ ╙──      	             ^
 //│ res: nothing -> int
 
@@ -109,26 +112,26 @@ q = 1
 :e
 q + 1
 //│ ╔══[ERROR] Type mismatch in operator application:
-//│ ║  l.110: 	q + 1
+//│ ║  l.113: 	q + 1
 //│ ║         	^^^
 //│ ╟── expression of type `anything` does not match type `int`
-//│ ║  l.101: 	def q: ?
+//│ ║  l.104: 	def q: ?
 //│ ║         	       ^
 //│ ╟── but it flows into reference with expected type `int`
-//│ ║  l.110: 	q + 1
+//│ ║  l.113: 	q + 1
 //│ ╙──       	^
 //│ res: error | int
 
 :e
 q q
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.123: 	q q
+//│ ║  l.126: 	q q
 //│ ║         	^^^
 //│ ╟── expression of type `anything` is not a function
-//│ ║  l.101: 	def q: ?
+//│ ║  l.104: 	def q: ?
 //│ ║         	       ^
 //│ ╟── but it flows into reference with expected type `anything -> ?a`
-//│ ║  l.123: 	q q
+//│ ║  l.126: 	q q
 //│ ╙──       	^
 //│ res: error
 

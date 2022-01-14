@@ -36,33 +36,42 @@ T a
 //│ ║        	  ^
 //│ ╟── Note: constraint arises from type reference:
 //│ ║  l.7: 	trait T: A & B
-//│ ╙──     	             ^
+//│ ║       	             ^
+//│ ╟── Note: Type class is defined at: 
+//│ ║  l.1: 	class A
+//│ ╙──     	      ^
 //│ res: A & t | error
 
 :e
 T A
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.43: 	T A
+//│ ║  l.46: 	T A
 //│ ║        	^^^
 //│ ╟── expression of type `anything -> A` does not match type `A`
-//│ ║  l.43: 	T A
+//│ ║  l.46: 	T A
 //│ ║        	  ^
 //│ ╟── Note: constraint arises from type reference:
 //│ ║  l.7: 	trait T: A & B
-//│ ╙──     	         ^
+//│ ║       	         ^
+//│ ╟── Note: Type class constructor is defined at: 
+//│ ║  l.1: 	class A
+//│ ╙──     	      ^
 //│ res: anything -> A & t | error
 
 :e
 T (B {})
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.56: 	T (B {})
+//│ ║  l.62: 	T (B {})
 //│ ║        	^^^^^^^
 //│ ╟── expression of type `B` does not match type `A`
-//│ ║  l.56: 	T (B {})
+//│ ║  l.62: 	T (B {})
 //│ ║        	   ^^^^
 //│ ╟── Note: constraint arises from type reference:
 //│ ║  l.7: 	trait T: A & B
-//│ ╙──     	         ^
+//│ ║       	         ^
+//│ ╟── Note: Type class is defined at: 
+//│ ║  l.2: 	class B
+//│ ╙──     	      ^
 //│ res: B & t | error
 
 def t = T error
@@ -81,13 +90,13 @@ t: Als
 :e
 class D0: T
 //│ ╔══[ERROR] class D0 cannot inherit from class B as it already inherits from class A
-//│ ║  l.82: 	class D0: T
+//│ ║  l.91: 	class D0: T
 //│ ╙──      	      ^^^^^
 
 :e
 class D1: B & T
 //│ ╔══[ERROR] class D1 cannot inherit from class A as it already inherits from class B
-//│ ║  l.88: 	class D1: B & T
+//│ ║  l.97: 	class D1: B & T
 //│ ╙──      	      ^^^^^^^^^
 
 
@@ -103,13 +112,13 @@ t = s: s
 :e
 t.x
 //│ ╔══[ERROR] Type mismatch in field selection:
-//│ ║  l.104: 	t.x
+//│ ║  l.113: 	t.x
 //│ ║         	^^^
 //│ ╟── expression of type `s` does not have field 'x'
-//│ ║  l.100: 	t = s: s
+//│ ║  l.109: 	t = s: s
 //│ ║         	       ^
 //│ ╟── but it flows into reference with expected type `{x: ?a}`
-//│ ║  l.104: 	t.x
+//│ ║  l.113: 	t.x
 //│ ╙──       	^
 //│ res: error
 
