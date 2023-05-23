@@ -1163,7 +1163,7 @@ class Typer(var dbg: Boolean, var verbose: Bool, var explainErrors: Bool)
                       val fresh_cls = {
                         implicit val freshened: MutMap[TV, ST] = MutMap.empty
                         implicit val shadows: Shadows = Shadows.empty
-                        cls.freshenAbove(cls.level, rigidify = false).asInstanceOf[TypedNuCls]
+                        cls.freshenAbove(cls.level, rigidify = false)
                       }
                       
                       val ty =

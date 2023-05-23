@@ -912,9 +912,9 @@ class NuTypeDefs extends ConstraintSolver { self: Typer =>
                         // * Note: can't use `ctx.poly` instead of `ctx.nextLevel` because all the methods
                         // * in the current typing unit are quantified together.
                         vars ++ fd.tparams.map { tn =>
-                          tn.name -> freshVar(TypeProvenance(tn.toLoc, "method type parameter",
+                          tn.name -> SkolemTag(ctx.lvl, freshVar(TypeProvenance(tn.toLoc, "method type parameter",
                             originName = S(tn.name),
-                            isType = true), N, S(tn.name))
+                            isType = true), N, S(tn.name)))(provTODO)
                         } |> { implicit vars =>
                           // * Only type methods polymorphically if they're at the top level or if
                           // * they're annotated with a type signature.

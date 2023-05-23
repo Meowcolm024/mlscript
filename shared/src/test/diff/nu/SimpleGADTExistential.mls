@@ -1,0 +1,161 @@
+:NewDefs
+:NoJS
+
+
+trait Base: Foo | Bar
+class Foo[A](f: A => int, a: A) extends Base
+class Bar[B](f: B => B) extends Base
+//│ trait Base()
+//│ class Foo[A](f: A -> int, a: A)
+//│ class Bar[B](f: B -> B)
+
+
+:e
+fun f(e: Base) = if e is
+  Foo(f, a) then f(a)
+  else 0
+//│ ╔══[ERROR] Type error in `case` expression
+//│ ║  l.14: 	fun f(e: Base) = if e is
+//│ ║        	                    ^^^^
+//│ ║  l.15: 	  Foo(f, a) then f(a)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.16: 	  else 0
+//│ ║        	^^^^^^^^
+//│ ╟── type variable `A` leaks out of its scope
+//│ ║  l.6: 	class Foo[A](f: A => int, a: A) extends Base
+//│ ╙──     	          ^
+//│ fun f: (e: Base,) -> int
+
+:e
+fun f(e: Base) = if e is
+  Foo(f, a) then f(a)
+  Bar(f) then 1
+//│ ╔══[ERROR] Type error in `case` expression
+//│ ║  l.30: 	fun f(e: Base) = if e is
+//│ ║        	                    ^^^^
+//│ ║  l.31: 	  Foo(f, a) then f(a)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.32: 	  Bar(f) then 1
+//│ ║        	^^^^^^^^^^^^^^^
+//│ ╟── type variable `A` leaks out of its scope
+//│ ║  l.6: 	class Foo[A](f: A => int, a: A) extends Base
+//│ ╙──     	          ^
+//│ fun f: (e: Base,) -> int
+
+// :d
+fun f(e) = if e is
+  Foo(f, a) then f(a)
+  Bar(f) then 1
+//│ fun f: forall 'B 'A. (Bar['B] | Foo['A]) -> int
+
+
+// :d
+let f = forall 'a; (f: 'a => int, a: 'a) => f(a)
+//│ let f: forall 'a. (f: 'a -> int, a: 'a,) -> int
+
+// :d
+f(succ, 1)
+//│ int
+
+
+// :d
+let f = forall 'a; (x: ('a, 'a)) => x
+//│ let f: forall 'a. (x: ('a, 'a,),) -> ('a, 'a,)
+
+
+
+trait Base[A]: Foo | Bar
+class Foo[A2, B](f: B => A2, a: B) extends Base[A2]
+class Bar[C](x: C) extends Base[(C, C)]
+//│ trait Base[A]()
+//│ class Foo[A2, B](f: B -> A2, a: B)
+//│ class Bar[C](x: C)
+
+let f = error : Foo[int, string]
+//│ let f: Foo[int, string]
+
+let g = f : Base['X] & Foo
+//│ let g: Foo[anything, ?] & Base[int]
+
+:e
+g : Foo['A, 'B]
+//│ ╔══[ERROR] Type error in type ascription
+//│ ║  l.81: 	g : Foo['A, 'B]
+//│ ║        	^
+//│ ╟── type variable `A2` leaks out of its scope
+//│ ║  l.81: 	g : Foo['A, 'B]
+//│ ║        	        ^^
+//│ ╟── back into type variable `A2`
+//│ ║  l.68: 	class Foo[A2, B](f: B => A2, a: B) extends Base[A2]
+//│ ╙──      	          ^^
+//│ Foo['A, 'B]
+//│   where
+//│     'B :> ??B
+//│        <: ??B0
+//│     'A :> ??A2
+//│        <: ??A20
+
+
+// What we have:
+// | | | | | Match arm Foo: Foo<Eql,Base> & {Foo#A: mut A90_113'..A90_113', Foo#B: B91_114'}
+// What we want:
+// | | | | | Match arm Foo: Foo<Eql,Base> & {Foo#A: mut ‘A90_113''..‘A90_113'', Foo#B: ‘B91_114'', Base#A: mut A93_115'..A93_115'}
+// So that we infer *essentially* (this signature could also be provided):
+//    f: forall 'A. Base['A] => ('A | int)
+// Actually it will be something like:
+//    f: forall 'A. Foo[??A, ??B] & {Base#A: 'A} => ('A & ??A | int)
+//  which we'll need to simplify later
+// The point of this type is that such a function could call itself recursively with both a Foo['A, int] and Foo['A, string] for example
+//  The first constraint will be Foo['A, int] <: (Foo[??A, ??B] & {Base#A: 'A})
+
+// How to type a GADT branch:
+//  1. Create type variables for the base class type arguments AND for the result type 'R
+//  2. Create a nested polymorphic context for the existential types
+//  3. Type the branch (result type T)
+//  4. Still within that context, constrain T <: 'R, which may or may not lead to extrusion
+
+// :d
+fun f(e) = if e is
+  Foo(f, a) then f(a)
+  else 0
+//│ fun f: forall 'a 'B. (Foo['a, 'B] | ~Foo[anything, ?]) -> (0 | 'a)
+
+:e
+fun f(e: Base['A]) = if e is
+  Foo(f, a) then f(a)
+  else 0
+//│ ╔══[ERROR] Type error in `case` expression
+//│ ║  l.124: 	fun f(e: Base['A]) = if e is
+//│ ║         	                        ^^^^
+//│ ║  l.125: 	  Foo(f, a) then f(a)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.126: 	  else 0
+//│ ║         	^^^^^^^^
+//│ ╟── type variable `B` leaks out of its scope
+//│ ║  l.68: 	class Foo[A2, B](f: B => A2, a: B) extends Base[A2]
+//│ ╙──      	              ^
+//│ fun f: forall 'A. (e: Base['A],) -> (0 | ??A2)
+
+fun f(e) = if e is
+  Foo(f, a) then f(a)
+  Bar(x) then let y = x._1 in 0
+//│ fun f: forall 'a 'B. (Bar[{_1: anything}] | Foo['a, 'B]) -> (0 | 'a)
+
+:e
+fun f(e: Base['A]) = if e is
+  Foo(f, a) then f(a)
+  Bar(x) then let y = x._1 in 0
+//│ ╔══[ERROR] Type error in `case` expression
+//│ ║  l.145: 	fun f(e: Base['A]) = if e is
+//│ ║         	                        ^^^^
+//│ ║  l.146: 	  Foo(f, a) then f(a)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.147: 	  Bar(x) then let y = x._1 in 0
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── type variable `B` leaks out of its scope
+//│ ║  l.68: 	class Foo[A2, B](f: B => A2, a: B) extends Base[A2]
+//│ ╙──      	              ^
+//│ fun f: forall 'A. (e: Base['A],) -> (0 | ??A2)
+
+
+
