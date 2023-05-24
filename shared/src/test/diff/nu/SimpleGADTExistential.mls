@@ -103,8 +103,12 @@ g : Foo['A, 'B]
 // So that we infer *essentially* (this signature could also be provided):
 //    f: forall 'A. Base['A] => ('A | int)
 // Actually it will be something like:
-//    f: forall 'A. Foo[??A, ??B] & {Base#A: 'A} => ('A & ??A | int)
+//    f: forall 'A. (Base['A] & Foo) => ('A & ??A | int)
 //  which we'll need to simplify later
+// And in the case of matching several ctors:
+//    f: forall 'A. (Base['A] & Foo | Base['A] & Bar) => ('A & ??A | int)
+//  or equivalently
+//    f: forall 'A. (Base['A] & (Foo | Bar)) => ('A & ??A | int)
 // The point of this type is that such a function could call itself recursively with both a Foo['A, int] and Foo['A, string] for example
 //  The first constraint will be Foo['A, int] <: (Foo[??A, ??B] & {Base#A: 'A})
 
@@ -125,11 +129,11 @@ fun f(e: Base['A]) = if e is
   Foo(f, a) then f(a)
   else 0
 //│ ╔══[ERROR] Type error in `case` expression
-//│ ║  l.124: 	fun f(e: Base['A]) = if e is
+//│ ║  l.128: 	fun f(e: Base['A]) = if e is
 //│ ║         	                        ^^^^
-//│ ║  l.125: 	  Foo(f, a) then f(a)
+//│ ║  l.129: 	  Foo(f, a) then f(a)
 //│ ║         	^^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.126: 	  else 0
+//│ ║  l.130: 	  else 0
 //│ ║         	^^^^^^^^
 //│ ╟── type variable `B` leaks out of its scope
 //│ ║  l.68: 	class Foo[A2, B](f: B => A2, a: B) extends Base[A2]
@@ -146,11 +150,11 @@ fun f(e: Base['A]) = if e is
   Foo(f, a) then f(a)
   Bar(x) then let y = x._1 in 0
 //│ ╔══[ERROR] Type error in `case` expression
-//│ ║  l.145: 	fun f(e: Base['A]) = if e is
+//│ ║  l.149: 	fun f(e: Base['A]) = if e is
 //│ ║         	                        ^^^^
-//│ ║  l.146: 	  Foo(f, a) then f(a)
+//│ ║  l.150: 	  Foo(f, a) then f(a)
 //│ ║         	^^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.147: 	  Bar(x) then let y = x._1 in 0
+//│ ║  l.151: 	  Bar(x) then let y = x._1 in 0
 //│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── type variable `B` leaks out of its scope
 //│ ║  l.68: 	class Foo[A2, B](f: B => A2, a: B) extends Base[A2]
