@@ -23,13 +23,51 @@ fun w1(x, e_0, e_1) =
       Left(Some(lv)) then concat("Left of Some of ")(toString(lv))
       _ and e_1 is y_1 and x is
         Right(Some(rv)) then concat("Right of Some of ")(toString(rv))
-//│ fun w1: (Left[None | Some[anything] | ~??A] | Right[None | Some[anything] | ~??B], anything, anything) -> Str
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.19: 	  if x is
+//│ ║        	     ^^^^
+//│ ║  l.20: 	    Left(None) then "Left of None"
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.21: 	    Right(None) then "Right of None"
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.22: 	    _ and e_0 is y_0 and x is
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.23: 	      Left(Some(lv)) then concat("Left of Some of ")(toString(lv))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` does not match type `None | Some[?T]`
+//│ ║  l.12: 	class Left[A](val leftValue: A)
+//│ ║        	                  ^^^^^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.20: 	    Left(None) then "Left of None"
+//│ ╙──      	         ^^^^
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.19: 	  if x is
+//│ ║        	     ^^^^
+//│ ║  l.20: 	    Left(None) then "Left of None"
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.21: 	    Right(None) then "Right of None"
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.22: 	    _ and e_0 is y_0 and x is
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.23: 	      Left(Some(lv)) then concat("Left of Some of ")(toString(lv))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.24: 	      _ and e_1 is y_1 and x is
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.25: 	        Right(Some(rv)) then concat("Right of Some of ")(toString(rv))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `B & ?B` does not match type `None | Some[?T]`
+//│ ║  l.13: 	class Right[B](val rightValue: B)
+//│ ║        	                   ^^^^^^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.21: 	    Right(None) then "Right of None"
+//│ ╙──      	          ^^^^
+//│ fun w1: (Left[anything] | Right[anything], anything, anything) -> error
 
 w1(Left(None), "a", "b")
 w1(Right(None), "a", "b")
 w1(Left(Some(0)), "a", "b")
 w1(Right(Some(0)), "a", "b")
-//│ Str
+//│ error
 //│ res
 //│     = 'Left of None'
 //│ res
@@ -105,7 +143,7 @@ w3(0, _ => false)
 fun w3_1(x, f) =
   if f(x) is _ then 0 else 1
 //│ ╔══[WARNING] Found a redundant else branch
-//│ ║  l.106: 	  if f(x) is _ then 0 else 1
+//│ ║  l.144: 	  if f(x) is _ then 0 else 1
 //│ ╙──       	                           ^
 //│ fun w3_1: forall 'a. ('a, 'a -> anything) -> 0
 
@@ -121,7 +159,7 @@ w3_1(0, _ => false)
 fun w3_1_1(x, f) =
   if f(x) is a then a else 0
 //│ ╔══[WARNING] Found a redundant else branch
-//│ ║  l.122: 	  if f(x) is a then a else 0
+//│ ║  l.160: 	  if f(x) is a then a else 0
 //│ ╙──       	                           ^
 //│ fun w3_1_1: forall 'a 'b. ('a, 'a -> 'b) -> 'b
 
@@ -243,14 +281,50 @@ fun w7(x, f) =
       None then x
     Left(x) then x + 1
     Right(x) then x + 2
-//│ fun w7: forall 'a 'T. (Left[Int | ~??A] | Object & 'a & ~#Left & ~#Right | Right[Int | ~??B], 'a -> (None | Some['T])) -> (Int | ??T & 'T | 'a)
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.278: 	  if x is
+//│ ║         	     ^^^^
+//│ ║  l.279: 	    _ and f(x) is
+//│ ║         	^^^^^^^^^^^^^^^^^
+//│ ║  l.280: 	      Some(v) then v
+//│ ║         	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.281: 	      None then x
+//│ ║         	^^^^^^^^^^^^^^^^^
+//│ ║  l.282: 	    Left(x) then x + 1
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Int`
+//│ ║  l.12: 	class Left[A](val leftValue: A)
+//│ ║        	                  ^^^^^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.282: 	    Left(x) then x + 1
+//│ ╙──       	                 ^
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.278: 	  if x is
+//│ ║         	     ^^^^
+//│ ║  l.279: 	    _ and f(x) is
+//│ ║         	^^^^^^^^^^^^^^^^^
+//│ ║  l.280: 	      Some(v) then v
+//│ ║         	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.281: 	      None then x
+//│ ║         	^^^^^^^^^^^^^^^^^
+//│ ║  l.282: 	    Left(x) then x + 1
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.283: 	    Right(x) then x + 2
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `B & ?B` is not an instance of type `Int`
+//│ ║  l.13: 	class Right[B](val rightValue: B)
+//│ ║        	                   ^^^^^^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.283: 	    Right(x) then x + 2
+//│ ╙──       	                  ^
+//│ fun w7: forall 'a 'T. (Left[anything] | Object & 'a & ~#Left & ~#Right | Right[anything], 'a -> (None | Some['T])) -> (Int | error | ??T & 'T | 'a)
 
 // The results are wrong:
 w7(Left(99), _ => Some(0)) // => 0
 w7(Left(99), _ => None) // => Left(99)
 w7(Right(99), _ => Some(0)) // => 0
 w7(Right(99), _ => None) // => Right(99)
-//│ Int
+//│ Int | error
 //│ res
 //│     = 100
 //│ res

@@ -132,26 +132,31 @@ fun traverse(t, f) =
     Empty then Nil
     Node(key, value, left, right) then
       listConcat(traverse(left, f), Cons(f(key, value), traverse(right, f)))
+//│ ╔══[ERROR] Subtyping constraint of the form `(?a, ?b) -> (?c | ?d) <: ?traverse` exceeded recursion depth limit (250)
+//│ ║  l.130: 	fun traverse(t, f) =
+//│ ║         	    ^^^^^^^^^^^^^^^^
+//│ ║  l.131: 	  if t is
+//│ ║         	^^^^^^^^^
+//│ ║  l.132: 	    Empty then Nil
+//│ ║         	^^^^^^^^^^^^^^^^^^
+//│ ║  l.133: 	    Node(key, value, left, right) then
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.134: 	      listConcat(traverse(left, f), Cons(f(key, value), traverse(right, f)))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╙── Note: use flag `:ex` to see internal error info.
 //│ type TreeMap[A] = Empty | Node[A]
 //│ module Empty
 //│ class Node[A](key: Str, value: A, left: TreeMap[A], right: TreeMap[A])
-//│ fun insert: forall 'A 'A0 'A1 'A2 'A3. (Empty | Node[in 'A3 out 'A2], Str, 'A1 & 'A & ('A2 | ??A)) -> Node[in 'A1 out 'A0]
+//│ fun insert: forall 'A 'A0 'A1 'A2 'A3. (Empty | Node[in 'A out 'A0], Str, 'A3 & 'A1 & ('A0 | ??A)) -> Node[in 'A3 out 'A2]
 //│ fun find: forall 'A4. (Empty | Node[in 'A4 out nothing], Str) -> (None | Some[??A0 & 'A4])
-//│ fun traverse: forall 'A5 'A6 'A7 'A8 'A9 'A10. (Empty | Node[in 'A7 out nothing], (Str, ??A1 & 'A7) -> ('A6 & 'A8 & 'A5)) -> (Cons[in 'A6 & 'A8 out 'A9 | 'A5] | Nil)
+//│ fun traverse: forall 'A5 'A6 'A7. (Empty | Node[in 'A5 out nothing], (Str, ??A1 & 'A5) -> 'A6) -> (Cons[in 'A7] | Nil)
 //│ where
-//│   'A6 <: 'A8 & 'A5
-//│   'A8 :> 'A9 | 'A5 | ??A2 & 'A10
-//│       <: 'A6 & 'A5
-//│   'A9 :> 'A8 | ??A2 & 'A10
-//│   'A10 :> 'A9 | 'A8 & 'A5
-//│   'A5 :> 'A9 | 'A8 | ??A2 & 'A10
-//│       <: 'A6 & 'A8
-//│   'A3 <: 'A1 & 'A & (~??A3 & ('A2 | ??A) | 'A1 & ('A2 | ??A)) | ~??A3
-//│   'A1 :> 'A0 | ??A3 & 'A3
-//│       <: 'A & ('A2 | ??A)
-//│   'A <: 'A1 & ('A2 | ??A)
-//│   'A2 <: 'A3
-//│   'A0 :> 'A1 | ??A3 & 'A3
+//│   'A <: 'A3 & 'A1 & (~??A2 & ('A0 | ??A) | 'A3 & ('A0 | ??A)) | ~??A2
+//│   'A3 :> 'A2 | ??A2 & 'A
+//│       <: 'A1 & ('A0 | ??A)
+//│   'A1 <: 'A3 & ('A0 | ??A)
+//│   'A0 <: 'A
+//│   'A2 :> 'A3 | ??A2 & 'A
 
 :e // FIXME recursion depth excess
 type JsonValue = JsonNull | JsonNumber | JsonString | JsonBoolean | JsonObject | JsonArray
@@ -175,8 +180,8 @@ class JsonObject(entries: TreeMap[JsonValue]) {
 class JsonArray(elements: List[JsonValue]) {
   fun toString() = concat3("[", listJoin(elements, ", "), "]")
 }
-//│ ╔══[ERROR] Subtyping constraint of the form `forall ?a ?b ?c ?d. (?a, ?c) -> (?d | ?b) <: (?e, forall ?f ?g ?h. (?g, ?f) -> ?h) -> ?i` exceeded recursion depth limit (250)
-//│ ║  l.173: 	      else concat3("{ ", listJoin(traverse(entries, (k, v) => concat3(k, ": ", getStringOf(v))), ", "), " }")
+//│ ╔══[ERROR] Subtyping constraint of the form `forall ?a ?b ?c ?d. (?c, ?b) -> (?d | ?a) <: (?e, forall ?f ?g ?h. (?h, ?f) -> ?g) -> ?i` exceeded recursion depth limit (250)
+//│ ║  l.178: 	      else concat3("{ ", listJoin(traverse(entries, (k, v) => concat3(k, ": ", getStringOf(v))), ", "), " }")
 //│ ║         	                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╙── Note: use flag `:ex` to see internal error info.
 //│ type JsonValue = JsonArray | JsonBoolean | JsonNull | JsonNumber | JsonObject | JsonString
@@ -265,7 +270,25 @@ fun expect(scanner, ch) =
       eq(ch)(ch') then ParseSuccess((), scanner.advance)
       else ParseFailure(concat4("expect '", ch, "' but found ", ch'), scanner)
     None then ParseFailure(concat3("expect '", ch, "' but found EOF"), scanner)
-//│ fun expect: (Scanner & {advance: Scanner}, Str) -> (ParseFailure | ParseSuccess[()])
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.268: 	  if skipWhiteSpace(scanner).peek is
+//│ ║         	     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.269: 	    Some(ch') and
+//│ ║         	^^^^^^^^^^^^^^^^^
+//│ ║  l.270: 	      eq(ch)(ch') then ParseSuccess((), scanner.advance)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.271: 	      else ParseFailure(concat4("expect '", ch, "' but found ", ch'), scanner)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Str`
+//│ ║  l.86: 	class Some[A](value: A)
+//│ ║        	              ^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.67: 	fun concat2(a, b) = concat(a)(b)
+//│ ║        	                              ^
+//│ ╟── from reference:
+//│ ║  l.271: 	      else ParseFailure(concat4("expect '", ch, "' but found ", ch'), scanner)
+//│ ╙──       	                                                                ^^^
+//│ fun expect: (Scanner & {advance: Scanner}, Str) -> (ParseFailure | ParseSuccess[()] | error)
 
 fun expectWord(scanner, word, result) =
   if
@@ -323,11 +346,59 @@ fun parse(scanner) =
       eq(ch)("n") then expectWord(scanner', "null", JsonNull)
       else
         ParseFailure(concat3("unrecognized character '", ch, "'"), scanner)
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.337: 	  if scanner'.peek is
+//│ ║         	     ^^^^^^^^^^^^^^^^
+//│ ║  l.338: 	    None then ParseFailure("expect a JSON value instead of EOF", scanner')
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.339: 	    Some(ch) and
+//│ ║         	^^^^^^^^^^^^^^^^
+//│ ║  l.340: 	      eq(ch)("{") then parseMatched(scanner', "}", parseEntries, JsonObject)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.341: 	      eq(ch)("[") then parseMatched(scanner', "]", parseElements, JsonArray)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.342: 	      eq(ch)("\"") then parseMatched(scanner', "\"", parseStringContent, JsonString)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.343: 	      eq(ch)("-") then parseNumber(scanner')
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.344: 	      eq(ch)("t") then expectWord(scanner', "true", JsonBoolean(true))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.345: 	      eq(ch)("f") then expectWord(scanner', "false", JsonBoolean(false))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.346: 	      eq(ch)("n") then expectWord(scanner', "null", JsonNull)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.347: 	      else
+//│ ║         	^^^^^^^^^^
+//│ ║  l.348: 	        ParseFailure(concat3("unrecognized character '", ch, "'"), scanner)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Str`
+//│ ║  l.86: 	class Some[A](value: A)
+//│ ║        	              ^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.67: 	fun concat2(a, b) = concat(a)(b)
+//│ ║        	                           ^
+//│ ╟── from reference:
+//│ ║  l.348: 	        ParseFailure(concat3("unrecognized character '", ch, "'"), scanner)
+//│ ╙──       	                                                         ^^
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.327: 	          Some(ch) and eq(ch)(",") and parseElements(scanner'.advance) is
+//│ ║         	                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.328: 	            ParseSuccess(tail, scanner') then ParseSuccess(Cons(head, tail), scanner')
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` does not match type `Cons[?A] | Nil`
+//│ ║  l.253: 	class ParseSuccess[T](value: T, scanner: Scanner) {
+//│ ║         	                      ^^^^^
+//│ ╟── Note: constraint arises from union type:
+//│ ║  l.91: 	type List[A] = Cons[A] | Nil
+//│ ║        	               ^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.328: 	            ParseSuccess(tail, scanner') then ParseSuccess(Cons(head, tail), scanner')
+//│ ╙──       	                                                                      ^^^^
 //│ fun parseEntries: anything -> ParseResult[TreeMap[JsonValue]]
 //│ fun parseElements: Scanner -> ParseResult[List[JsonValue]]
 //│ fun parseStringContent: anything -> ParseResult[Str]
 //│ fun parseNumber: anything -> ParseResult[JsonNumber]
-//│ fun parse: Scanner -> (ParseFailure | ParseSuccess[JsonArray | JsonBoolean | JsonNull | JsonObject | JsonString] | ParseResult[JsonNumber])
+//│ fun parse: Scanner -> (ParseFailure | ParseSuccess[JsonArray | JsonBoolean | JsonNull | JsonObject | JsonString] | error | ParseResult[JsonNumber])
 
 :ng
 toString of parse of scan of "    true"

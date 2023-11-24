@@ -35,11 +35,36 @@ mixin Contains {
 //│ }
 
 module TestContains extends Contains
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.37: 	module TestContains extends Contains
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??Region & ?Region` is not an instance of type `Union`
+//│ ║  l.30: 	    if a is Union then this.contains(a.a)
+//│ ║        	                                     ^^^
+//│ ╟── Note: constraint arises from class pattern:
+//│ ║  l.30: 	    if a is Union then this.contains(a.a)
+//│ ║        	            ^^^^^
+//│ ╟── from reference:
+//│ ║  l.30: 	    if a is Union then this.contains(a.a)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `??Region` does not contain member `Union#Region`
+//│ ║  l.5: 	class Union[out Region](val a: Region)
+//│ ╙──     	                ^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.37: 	module TestContains extends Contains
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??Region & ?Region` is not an instance of type `Object`
+//│ ║  l.30: 	    if a is Union then this.contains(a.a)
+//│ ║        	                                     ^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.30: 	    if a is Union then this.contains(a.a)
+//│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.30: 	    if a is Union then this.contains(a.a)
+//│ ╙──      	       ^
 //│ module TestContains {
-//│   fun contains: Union['Region] -> nothing
+//│   fun contains: Union[anything] -> nothing
 //│ }
-//│ where
-//│   'Region <: Union['Region] | ~??Region
 
 TestContains.contains(circles)
 //│ nothing

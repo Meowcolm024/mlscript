@@ -25,7 +25,31 @@ fun f(a, b) = if a is Some(av)
 //│ |#fun| |f|(|a|,| |b|)| |#=| |#if| |a| |is| |Some|(|av|)|→|and| |b| |is| |Some|(|bv|)|↵|#then| |av| |+| |bv|←|
 //│ AST: TypingUnit(NuFunDef(None, f, None, [], Lam(Tup(_: Var(a), _: Var(b)), If(IfOpApp(Var(a), Var(is), I; f; O; p; s; A; p; p; (; A; p; p; (; V; a; r; (; S; o; m; e; ); ,;  ; T; u; p; (; _; :;  ; V; a; r; (; a; v; ); ); ); ,;  ; <; i; t; e; r; a; t; o; r; >, None))))
 //│ Parsed: fun f = (a, b,) => if a is Some(av,) ‹· and (is(b, Some(bv,),)) then +(av, bv,)›;
-//│ fun f: (Some[Int | ~??T], Some[Int | ~??T0]) -> Int
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.23: 	    and b is Some(bv)
+//│ ║        	        ^^^^^^^^^^^^^
+//│ ║  l.24: 	    then av + bv
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Int`
+//│ ║  l.5: 	class Some[T](value: T)
+//│ ║       	              ^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.24: 	    then av + bv
+//│ ╙──      	              ^^
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.22: 	fun f(a, b) = if a is Some(av)
+//│ ║        	                 ^^^^^^^^^^^^^
+//│ ║  l.23: 	    and b is Some(bv)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.24: 	    then av + bv
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Int`
+//│ ║  l.5: 	class Some[T](value: T)
+//│ ║       	              ^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.24: 	    then av + bv
+//│ ╙──      	         ^^
+//│ fun f: (Some[anything], Some[anything]) -> (Int | error)
 
 // TODO
 :p
@@ -37,7 +61,7 @@ fun f(a, b) = if a is
 //│ AST: TypingUnit(NuFunDef(None, f, None, [], Lam(Tup(_: Var(a), _: Var(b)), If(IfOpApp(Var(a), Var(is), IfBlock(I; f; O; p; s; A; p; p; (; A; p; p; (; V; a; r; (; S; o; m; e; ); ,;  ; T; u; p; (; _; :;  ; V; a; r; (; a; v; ); ); ); ,;  ; <; i; t; e; r; a; t; o; r; >), None))))
 //│ Parsed: fun f = (a, b,) => if a is ‹Some(av,) ‹· and (is(b, Some(bv,),)) then +(av, bv,)››;
 //│ ╔══[ERROR] Illegal pattern `and`
-//│ ║  l.34: 	    and b is Some(bv)
+//│ ║  l.58: 	    and b is Some(bv)
 //│ ╙──      	    ^^^
 //│ fun f: (anything, anything) -> error
 //│ Code generation encountered an error:

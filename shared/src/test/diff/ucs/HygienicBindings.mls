@@ -26,7 +26,18 @@ fun h0(a) =
     a is Some(Left(y)) then y
     a is Some(Right(z)) then z
     a is None then 0
-//│ fun h0: forall 'A 'B. (None | Some[Left['A] | Right['B] | ~??T]) -> (0 | ??A & 'A | ??B & 'B)
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.26: 	    a is Some(Left(y)) then y
+//│ ║        	    ^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.27: 	    a is Some(Right(z)) then z
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` does not match type `Left[?A] | Right[?B]`
+//│ ║  l.5: 	class Some[out T](val value: T)
+//│ ║       	                      ^^^^^
+//│ ╟── Note: constraint arises from application:
+//│ ║  l.26: 	    a is Some(Left(y)) then y
+//│ ╙──      	              ^^^^^^^
+//│ fun h0: (None | Some[anything]) -> (0 | error)
 
 // FIXME: Precise scrutinee identification (easy)
 // This seems fine. But the subtrees are not merged.
@@ -35,7 +46,21 @@ fun h1(a) =
     a is Some(x) and x is Left(y) then y
     a is Some(y) and y is Right(z) then z
     a is None then 0
-//│ fun h1: forall 'B. (None | Some[Right['B] | ~??T]) -> (0 | ??B & 'B)
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.46: 	    a is Some(x) and x is Left(y) then y
+//│ ║        	    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.47: 	    a is Some(y) and y is Right(z) then z
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Right`
+//│ ║  l.5: 	class Some[out T](val value: T)
+//│ ║       	                      ^^^^^
+//│ ╟── Note: constraint arises from class pattern:
+//│ ║  l.47: 	    a is Some(y) and y is Right(z) then z
+//│ ║        	                          ^^^^^
+//│ ╟── from reference:
+//│ ║  l.47: 	    a is Some(y) and y is Right(z) then z
+//│ ╙──      	                     ^
+//│ fun h1: (None | Some[anything]) -> (0 | error)
 
 // This is the desugared version of the test case above.
 fun h1'(a) =
@@ -53,7 +78,65 @@ fun h1'(a) =
               let z = y.rightValue
               z
     None then 0
-//│ fun h1': forall 'B. (None | Some[Right['B] | Right[anything] & ~??T | ~??T]) -> (0 | ??B & 'B)
+//│ ╔══[ERROR] Type mismatch in `case` expression:
+//│ ║  l.71: 	      if x is
+//│ ║        	         ^^^^
+//│ ║  l.72: 	        Left then
+//│ ║        	^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	          let y = x.leftValue
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.74: 	          y
+//│ ║        	^^^^^^^^^^^
+//│ ║  l.75: 	        _ then
+//│ ║        	^^^^^^^^^^^^^^
+//│ ║  l.76: 	          if y is
+//│ ║        	^^^^^^^^^^^^^^^^^
+//│ ║  l.77: 	            Right then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.78: 	              let z = y.rightValue
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.79: 	              z
+//│ ║        	^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Object`
+//│ ║  l.69: 	      let x = a.value
+//│ ║        	              ^^^^^^^
+//│ ╟── but it flows into reference with expected type `Object`
+//│ ║  l.71: 	      if x is
+//│ ╙──      	         ^
+//│ ╔══[ERROR] Type mismatch in `case` expression:
+//│ ║  l.76: 	          if y is
+//│ ║        	             ^^^^
+//│ ║  l.77: 	            Right then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.78: 	              let z = y.rightValue
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.79: 	              z
+//│ ║        	^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Object`
+//│ ║  l.70: 	      let y = a.value
+//│ ║        	              ^^^^^^^
+//│ ╟── but it flows into reference with expected type `Object`
+//│ ║  l.76: 	          if y is
+//│ ╙──      	             ^
+//│ ╔══[ERROR] Type mismatch in `case` expression:
+//│ ║  l.76: 	          if y is
+//│ ║        	             ^^^^
+//│ ║  l.77: 	            Right then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.78: 	              let z = y.rightValue
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.79: 	              z
+//│ ║        	^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Right`
+//│ ║  l.70: 	      let y = a.value
+//│ ║        	              ^^^^^^^
+//│ ╟── but it flows into reference with expected type `Right[anything]`
+//│ ║  l.76: 	          if y is
+//│ ║        	             ^
+//│ ╟── Note: constraint arises from class pattern:
+//│ ║  l.77: 	            Right then
+//│ ╙──      	            ^^^^^
+//│ fun h1': (None | Some[anything]) -> (0 | error | ??A & ??A0)
 
 // FIXME This seems fine but the desugared term does not merge the cases.
 // See the example below.
@@ -62,19 +145,24 @@ fun h1''(a) =
     a is Some(x) and x is Left(y) then y
     a is Some(x) and x is Right(z) then z
     a is None then 0
-//│ fun h1'': forall 'A 'B. (None | Some[Left['A] | Right['B] | ~??T]) -> (0 | ??A & 'A | ??B & 'B)
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.145: 	    a is Some(x) and x is Left(y) then y
+//│ ║         	    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.146: 	    a is Some(x) and x is Right(z) then z
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` does not match type `Left[?A] | Right[?B]`
+//│ ║  l.5: 	class Some[out T](val value: T)
+//│ ║       	                      ^^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.145: 	    a is Some(x) and x is Left(y) then y
+//│ ╙──       	                     ^
+//│ fun h1'': (None | Some[anything]) -> (0 | error)
 
 // FIXME
 h1(Some(Left(0)))
 h1'(Some(Left(0)))
 h1''(Some(Left(0)))
-//│ ╔══[ERROR] Type `Left[?A] & ??T` does not contain member `Right#B`
-//│ ║  l.12: 	class Right[B](val rightValue: B)
-//│ ╙──      	            ^
-//│ ╔══[ERROR] Type `Left[?A] & ??T` does not contain member `Right#B`
-//│ ║  l.12: 	class Right[B](val rightValue: B)
-//│ ╙──      	            ^
-//│ 0
+//│ 0 | error
 //│ res
 //│     = 0
 //│ res
@@ -91,12 +179,36 @@ fun h2(a) =
       y' is Right(z) then z
     a is None then 0
 //│ ╔══[ERROR] identifier not found: y
-//│ ║  l.90: 	      let y' = y
-//│ ╙──      	               ^
+//│ ║  l.178: 	      let y' = y
+//│ ╙──       	               ^
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.176: 	    a is Some(x) and x is x' and x' is Left(y) then y
+//│ ║         	    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.177: 	    a is Some(y) and
+//│ ║         	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.178: 	      let y' = y
+//│ ║         	^^^^^^^^^^^^^^^^
+//│ ║  l.179: 	      y' is Right(z) then z
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Object`
+//│ ║  l.5: 	class Some[out T](val value: T)
+//│ ║       	                      ^^^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.176: 	    a is Some(x) and x is x' and x' is Left(y) then y
+//│ ║         	                                 ^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.177: 	    a is Some(y) and
+//│ ║         	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.178: 	      let y' = y
+//│ ║         	^^^^^^^^^^^^^^^^
+//│ ║  l.179: 	      y' is Right(z) then z
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.176: 	    a is Some(x) and x is x' and x' is Left(y) then y
+//│ ╙──       	                     ^
 //│ ╔══[ERROR] identifier not found: y
-//│ ║  l.90: 	      let y' = y
-//│ ╙──      	               ^
-//│ fun h2: forall 'A. (None | Some[Left['A] | Object & ~#Left | ~??T]) -> (0 | error & ??B | ??A & 'A)
+//│ ║  l.178: 	      let y' = y
+//│ ╙──       	               ^
+//│ fun h2: (None | Some[anything]) -> (0 | error | ??A & ??A0)
 //│ Code generation encountered an error:
 //│   unresolved symbol y
 

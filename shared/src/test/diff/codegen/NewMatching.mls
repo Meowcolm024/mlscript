@@ -96,7 +96,25 @@ fun get1(s) =
   if s is
     Some(V1(x)) then x
     Some(y) then y
-//│ fun get1: forall 'T. Some['T & (Object | ~??T)] -> (Int | ??T0 & 'T)
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.96: 	  if s is
+//│ ║        	     ^^^^
+//│ ║  l.97: 	    Some(V1(x)) then x
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.98: 	    Some(y) then y
+//│ ║        	^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Object`
+//│ ║  l.91: 	class Some[T](val value: T)
+//│ ║        	                  ^^^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.97: 	    Some(V1(x)) then x
+//│ ║        	         ^^^^^^^^^^^^^
+//│ ║  l.98: 	    Some(y) then y
+//│ ║        	^^^^^^^^^^^^^^^^^^
+//│ ╟── from application:
+//│ ║  l.97: 	    Some(V1(x)) then x
+//│ ╙──      	         ^^^^^
+//│ fun get1: forall 'T. Some['T] -> (Int | error | ??T & 'T)
 //│ // Prelude
 //│ class TypingUnit5 {}
 //│ const typing_unit5 = new TypingUnit5;
@@ -113,7 +131,7 @@ fun get1(s) =
 
 get1(Some(V1(1)))
 get1(Some(V0()))
-//│ Int | V0 & ??T
+//│ Int | V0 & ??T | error
 //│ res
 //│     = 1
 //│ res
@@ -129,7 +147,10 @@ fun foo(s) =
   if s is
     Some(t) then let b = s2.value in b + t.x
     _ then 0  
-//│ fun foo: (Object & ~#Some | Some[{x: Int} | ~??T]) -> Int
+//│ ╔══[ERROR] Type `T` does not contain member `x`
+//│ ║  l.148: 	    Some(t) then let b = s2.value in b + t.x
+//│ ╙──       	                                          ^^
+//│ fun foo: (Object & ~#Some | Some[anything]) -> (Int | error)
 //│ // Prelude
 //│ class TypingUnit8 {}
 //│ const typing_unit8 = new TypingUnit8;
@@ -142,7 +163,7 @@ fun foo(s) =
 //│ // End of generated code
 
 foo(Some(V1(12)))
-//│ Int
+//│ Int | error
 //│ res
 //│     = 13
 
@@ -219,7 +240,7 @@ fun ft(x) =
     FooBar(x) then x
     _ then 0
 //│ ╔══[ERROR] class FooBar expects 0 parameter but found 1 parameter
-//│ ║  l.219: 	    FooBar(x) then x
+//│ ║  l.240: 	    FooBar(x) then x
 //│ ╙──       	    ^^^^^^^^^
 //│ fun ft: anything -> error
 //│ Code generation encountered an error:
@@ -265,7 +286,7 @@ fun c(x) =
     VVC(x, y, z) then x + y + z
     _ then 0
 //│ ╔══[ERROR] class VVC expects 2 parameters but found 3 parameters
-//│ ║  l.265: 	    VVC(x, y, z) then x + y + z
+//│ ║  l.286: 	    VVC(x, y, z) then x + y + z
 //│ ╙──       	    ^^^^^^^^^^^^
 //│ class VVC(v: Int, vc: Int)
 //│ fun c: anything -> error

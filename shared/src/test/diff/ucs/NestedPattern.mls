@@ -76,8 +76,16 @@ class Union(a, b)
 // Desugar result: let tmp13 = x in case tmp13 of { Union => let x = (tmp13).a in let y = (tmp13).b in x }
 fun hmm(x) =
   if x is Union(x, y) then x
-//│ hmm: (Union & {a: 'a}) -> 'a
+//│ ╔══[ERROR] Type mismatch in reference:
+//│ ║  l.78: 	  if x is Union(x, y) then x
+//│ ║        	     ^
+//│ ╙── reference of type `?b` does not match type `{a: ?a}`
+//│ ╔══[ERROR] Type mismatch in reference:
+//│ ║  l.78: 	  if x is Union(x, y) then x
+//│ ║        	     ^
+//│ ╙── reference of type `?a` does not match type `{b: ?b}`
+//│ hmm: Union -> error
 
 hmm(Union(1, 2))
-//│ res: 1
+//│ res: error
 

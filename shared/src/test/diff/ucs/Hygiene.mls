@@ -11,14 +11,32 @@ class Right[T](value: T)
 fun foo(x) = if x is
   Some(Left(y)) then x
   Some(x) then x
-//│ fun foo: forall 'T. Some['T & (Left[anything] | Object & ~#Left | ~??T)] -> (??T0 & 'T)
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.11: 	fun foo(x) = if x is
+//│ ║        	                ^^^^
+//│ ║  l.12: 	  Some(Left(y)) then x
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.13: 	  Some(x) then x
+//│ ║        	^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `T & ?T` is not an instance of type `Object`
+//│ ║  l.3: 	class Some[T](value: T)
+//│ ║       	              ^^^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.12: 	  Some(Left(y)) then x
+//│ ║        	       ^^^^^^^^^^^^^^^
+//│ ║  l.13: 	  Some(x) then x
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ╟── from application:
+//│ ║  l.12: 	  Some(Left(y)) then x
+//│ ╙──      	       ^^^^^^^
+//│ fun foo: forall 'T. Some['T] -> (error | ??T & 'T)
 
 foo(Some(Left(1)))
-//│ Left[1] & ??T
+//│ Left[1] & ??T | error
 //│ res
 //│     = Left {}
 
 foo(Some(2))
-//│ 2 & ??T
+//│ 2 & ??T | error
 //│ res
 //│     = 2

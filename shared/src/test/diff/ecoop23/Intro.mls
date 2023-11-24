@@ -91,12 +91,41 @@ class MyPoint(val x: Int, val y: Int, val color: Color, val parent: Some[MyPoint
 
 
 module CompareMyPoint extends ComparePoint, CompareColored, CompareNested
+//│ ╔══[ERROR] Type `??A` does not contain member `y`
+//│ ║  l.16: 	    (lhs.x === rhs.x) && (lhs.y === rhs.y)
+//│ ╙──      	                             ^^
+//│ ╔══[ERROR] Type `??A` does not contain member `x`
+//│ ║  l.16: 	    (lhs.x === rhs.x) && (lhs.y === rhs.y)
+//│ ╙──      	        ^^
+//│ ╔══[ERROR] Type `??A` does not contain member `color`
+//│ ║  l.38: 	    super.compare(lhs, rhs) && lhs.color.equals(rhs.color)
+//│ ╙──      	                                  ^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `parent`
+//│ ║  l.67: 	      if lhs.parent is Some(p)
+//│ ╙──      	            ^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `y`
+//│ ║  l.16: 	    (lhs.x === rhs.x) && (lhs.y === rhs.y)
+//│ ╙──      	                                       ^^
+//│ ╔══[ERROR] Type `??A` does not contain member `x`
+//│ ║  l.16: 	    (lhs.x === rhs.x) && (lhs.y === rhs.y)
+//│ ╙──      	                  ^^
+//│ ╔══[ERROR] Type `??A` does not contain member `color`
+//│ ║  l.38: 	    super.compare(lhs, rhs) && lhs.color.equals(rhs.color)
+//│ ╙──      	                                                   ^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `parent`
+//│ ║  l.69: 	        else rhs.parent is None
+//│ ╙──      	                ^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `parent`
+//│ ║  l.68: 	        then rhs.parent is Some(q) and this.compare(p, q)
+//│ ╙──      	                ^^^^^^^
 //│ module CompareMyPoint {
-//│   fun compare: ({color: {equals: 'color -> Bool}, parent: 'parent, x: Eql['a], y: Eql['b]}, {color: 'color, parent: Object & 'parent0, x: 'a, y: 'b}) -> Bool
+//│   fun compare: ({
+//│     color: {equals: (error | 'color) -> Bool},
+//│     parent: Object & ~#Some | Some[anything],
+//│     x: Eql[error | 'a],
+//│     y: Eql[error | 'b]
+//│   }, {color: 'color, parent: Object & ~#Some | Some[anything], x: 'a, y: 'b}) -> Bool
 //│ }
-//│ where
-//│   'parent0 <: Object & ~#Some | Some[{color: 'color, parent: Object & 'parent0, x: 'a, y: 'b} | ~??A]
-//│   'parent <: Object & ~#Some | Some[{color: {equals: 'color -> Bool}, parent: 'parent, x: Eql['a], y: Eql['b]} | ~??A0]
 
 
 let p0 = MyPoint(0, 0, Red, None)

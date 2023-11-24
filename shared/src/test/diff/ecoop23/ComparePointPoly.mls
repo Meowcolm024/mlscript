@@ -37,12 +37,41 @@ class MyPoint[out Col](val x: Int, val y: Int, val color: Col, val parent: Some[
 //│ class MyPoint[Col](x: Int, y: Int, color: Col, parent: None | Some[MyPoint[Col]])
 
 module CompareMyPoint extends ComparePoint, CompareColored, CompareNested
+//│ ╔══[ERROR] Type `??A` does not contain member `y`
+//│ ║  l.10: 	  fun compare(lhs, rhs) = (lhs.x === rhs.x) && (lhs.y === rhs.y)
+//│ ╙──      	                                                   ^^
+//│ ╔══[ERROR] Type `??A` does not contain member `x`
+//│ ║  l.10: 	  fun compare(lhs, rhs) = (lhs.x === rhs.x) && (lhs.y === rhs.y)
+//│ ╙──      	                              ^^
+//│ ╔══[ERROR] Type `??A` does not contain member `color`
+//│ ║  l.14: 	    super.compare(lhs, rhs) && (lhs.color === rhs.color)
+//│ ╙──      	                                   ^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `parent`
+//│ ║  l.19: 	      if lhs.parent is Some(p)
+//│ ╙──      	            ^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `y`
+//│ ║  l.10: 	  fun compare(lhs, rhs) = (lhs.x === rhs.x) && (lhs.y === rhs.y)
+//│ ╙──      	                                                             ^^
+//│ ╔══[ERROR] Type `??A` does not contain member `x`
+//│ ║  l.10: 	  fun compare(lhs, rhs) = (lhs.x === rhs.x) && (lhs.y === rhs.y)
+//│ ╙──      	                                        ^^
+//│ ╔══[ERROR] Type `??A` does not contain member `color`
+//│ ║  l.14: 	    super.compare(lhs, rhs) && (lhs.color === rhs.color)
+//│ ╙──      	                                                 ^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `parent`
+//│ ║  l.21: 	        else rhs.parent is None
+//│ ╙──      	                ^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `parent`
+//│ ║  l.20: 	        then rhs.parent is Some(q) and this.compare(p, q)
+//│ ╙──      	                ^^^^^^^
 //│ module CompareMyPoint {
-//│   fun compare: ({color: Eql['a], parent: 'parent, x: Eql['b], y: Eql['c]}, {color: 'a, parent: Object & 'parent0, x: 'b, y: 'c}) -> Bool
+//│   fun compare: ({
+//│     color: Eql[error | 'a],
+//│     parent: Object & ~#Some | Some[anything],
+//│     x: Eql[error | 'b],
+//│     y: Eql[error | 'c]
+//│   }, {color: 'a, parent: Object & ~#Some | Some[anything], x: 'b, y: 'c}) -> Bool
 //│ }
-//│ where
-//│   'parent0 <: Object & ~#Some | Some[{color: 'a, parent: Object & 'parent0, x: 'b, y: 'c} | ~??A]
-//│   'parent <: Object & ~#Some | Some[{color: Eql['a], parent: 'parent, x: Eql['b], y: Eql['c]} | ~??A0]
 
 let Red = 0
 let p0 = MyPoint(0, 0, Red, None)

@@ -25,7 +25,10 @@ fun list_assoc(s, l) =
       if s === h._1 then Success(h._2)
       else list_assoc(s, t)
     Nil then NotFound()
-//│ fun list_assoc: forall 'a 'A. (Eql['a], Cons[{_1: 'a, _2: 'A} | ~??A] | Nil) -> (NotFound | Success['A])
+//│ ╔══[ERROR] Type `A` does not contain member `_2`
+//│ ║  l.25: 	      if s === h._1 then Success(h._2)
+//│ ╙──      	                                  ^^^
+//│ fun list_assoc: (Eql[error], Cons[anything] | Nil) -> (NotFound | Success[error] | error)
 
 // fun list_assoc(s: Str, l: Cons[{ _1: Str, _2: 'b }] | Nil): NotFound | Success['b]
 
@@ -40,7 +43,7 @@ mixin EvalVar {
         Success(r) then r
 }
 //│ mixin EvalVar() {
-//│   fun eval: (Cons[{_1: anything, _2: 'A} | ~??A] | Nil, Var) -> (Var | ??A0 & 'A)
+//│   fun eval: (Cons[anything] | Nil, Var) -> (Var | error & ??A)
 //│ }
 
 class Abs[A](x: Str, t: A)
@@ -70,49 +73,336 @@ mixin EvalLambda {
     else
       super.eval(sub, v)
 }
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Object`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	             ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.66: 	        if t1 is
+//│ ║        	           ^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.66: 	        if t1 is
+//│ ╙──      	           ^^
 //│ mixin EvalLambda() {
 //│   super: {eval: ('a, 'b) -> 'c}
 //│   this: {
-//│     eval: ('a, ??A & 'A) -> ('d & 'e) & (Cons[[Str, 'e]], ??A0 & 'A0) -> 'c & (Cons[[Str, Var] | 'A1], ??A1 & 'A2) -> 'f
+//│     eval: ('a, ??A & 'A) -> ('d & 'e) & (Cons[[Str, 'e]], ??A0 & ??A1) -> 'c & (Cons[[Str, Var] | 'A0], ??A2 & 'A1) -> 'f
 //│   }
-//│   fun eval: ('a & (Cons['A1] | Nil), Abs['A2] | App['A & (Abs['A0] | Object & ~#Abs | ~??A2)] | Object & 'b & ~#Abs & ~#App) -> (Abs['f] | App['d | 'e] | 'c)
+//│   fun eval: ('a & (Cons['A0] | Nil), Abs['A1] | App['A] | Object & 'b & ~#Abs & ~#App) -> (Abs['f] | App['d | 'e] | error | 'c)
 //│ }
 
 module Test1 extends EvalVar, EvalLambda
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Var`
+//│ ╟── Note: constraint arises from class pattern:
+//│ ║  l.40: 	    if v is Var(s) then
+//│ ║        	            ^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.40: 	    if v is Var(s) then
+//│ ║        	       ^^^^^^^^^^^^^^^^
+//│ ║  l.41: 	      if list_assoc(s, sub) is
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.42: 	        NotFound then v
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.43: 	        Success(r) then r
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `App[anything] & ??A` does not contain member `Abs#A`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `Abs[anything] & ??A` does not contain member `App#A`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	      Abs(x, t) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	        let s = gensym()
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.72: 	        Abs(s, this.eval(Cons([x, Var(s)], sub), t))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	    else
+//│ ║        	^^^^^^^^
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Var`
+//│ ╟── Note: constraint arises from class pattern:
+//│ ║  l.40: 	    if v is Var(s) then
+//│ ║        	            ^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.40: 	    if v is Var(s) then
+//│ ║        	       ^^^^^^^^^^^^^^^^
+//│ ║  l.41: 	      if list_assoc(s, sub) is
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.42: 	        NotFound then v
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.43: 	        Success(r) then r
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `App[anything] & ??A` does not contain member `Abs#A`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `Abs[anything] & ??A` does not contain member `App#A`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	      Abs(x, t) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	        let s = gensym()
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.72: 	        Abs(s, this.eval(Cons([x, Var(s)], sub), t))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	    else
+//│ ║        	^^^^^^^^
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Var`
+//│ ╟── Note: constraint arises from class pattern:
+//│ ║  l.40: 	    if v is Var(s) then
+//│ ║        	            ^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.40: 	    if v is Var(s) then
+//│ ║        	       ^^^^^^^^^^^^^^^^
+//│ ║  l.41: 	      if list_assoc(s, sub) is
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.42: 	        NotFound then v
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.43: 	        Success(r) then r
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `App[anything] & ??A` does not contain member `Abs#A`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `Abs[anything] & ??A` does not contain member `App#A`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.116: 	module Test1 extends EvalVar, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	      Abs(x, t) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	        let s = gensym()
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.72: 	        Abs(s, this.eval(Cons([x, Var(s)], sub), t))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	    else
+//│ ║        	^^^^^^^^
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
 //│ module Test1 {
-//│   fun eval: (Cons[{_1: anything, _2: 'A} | ~??A] | Nil, Abs['A0] | App['A1] | Var) -> 'a
+//│   fun eval: (Cons[anything] | Nil, Abs[anything] | App[anything] | Var) -> 'a
 //│ }
 //│ where
-//│   'A0 <: Abs['A0] | App['A1] | Var | ~??A0
-//│   'A1 <: Abs['A0 & (Abs['A0] | App['A1] | Var | ~??A1)] | Abs['A0] & ~#Abs | App['A1] | Var | ~??A2
-//│   'A :> 'a
-//│   'a :> Var | ??A3 & 'A | Abs['a] | App['a]
+//│   'a :> Abs['a] | App['a] | Var | error
 
 Test1.eval(Nil, Var("a"))
 //│ 'a
 //│   where
-//│     'a :> Var | Abs['a] | App['a]
+//│     'a :> Abs['a] | App['a] | Var | error
 //│ res
 //│     = Var {}
 
 Test1.eval(Nil, Abs("b", Var("a")))
 //│ 'a
 //│   where
-//│     'a :> Var | Abs['a] | App['a]
+//│     'a :> Abs['a] | App['a] | Var | error
 //│ res
 //│     = Abs {}
 
 Test1.eval(Cons(["c", Var("d")], Nil), App(Abs("b", Var("b")), Var("c")))
 //│ 'a
 //│   where
-//│     'a :> Abs['a] | App['a] | Var
+//│     'a :> Abs['a] | App['a] | Var | error
 //│ res
 //│     = Var {}
 
 Test1.eval(Cons(["c", Abs("d", Var("d"))], Nil), App(Abs("b", Var("b")), Var("c")))
 //│ 'a
 //│   where
-//│     'a :> Abs[Var] & ??A | Var | Abs['a] | App['a]
+//│     'a :> Abs['a] | App['a] | Var | error
 //│ res
 //│     = Var {}
 
@@ -129,7 +419,7 @@ fun map_expr(f, v) =
     Numb then v
     Add(l, r) then Add(f(l), f(r))
     Mul(l, r) then Mul(f(l), f(r))
-//│ fun map_expr: forall 'a 'A 'b 'A0. ((??A & 'A) -> 'b & (??A0 & 'A0) -> 'a, Add['A] | Mul['A0] | Numb | Var) -> (Add['b] | Mul['a] | Numb | Var)
+//│ fun map_expr: forall 'A 'a 'A0 'b. ((??A & 'A) -> 'a & (??A0 & 'A0) -> 'b, Add['A] | Mul['A0] | Numb | Var) -> (Add['a] | Mul['b] | Numb | Var)
 
 mixin EvalExpr {
   fun eval(sub, v) =
@@ -141,32 +431,201 @@ mixin EvalExpr {
       Mul(Numb(l), Numb(r)) then Numb(l * r)
     else v
 }
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.428: 	    if vv is
+//│ ║         	       ^^^^^
+//│ ║  l.429: 	      Var then super.eval(sub, vv)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.430: 	      Add(Numb(l), Numb(r)) then Numb(l + r)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.431: 	      Mul(Numb(l), Numb(r)) then Numb(l * r)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.432: 	    else v
+//│ ║         	^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Object`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	             ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.430: 	      Add(Numb(l), Numb(r)) then Numb(l + r)
+//│ ║         	          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.431: 	      Mul(Numb(l), Numb(r)) then Numb(l * r)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.432: 	    else v
+//│ ║         	^^^^^^^^^^^
+//│ ╟── from application:
+//│ ║  l.430: 	      Add(Numb(l), Numb(r)) then Numb(l + r)
+//│ ╙──       	          ^^^^^^^
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.428: 	    if vv is
+//│ ║         	       ^^^^^
+//│ ║  l.429: 	      Var then super.eval(sub, vv)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.430: 	      Add(Numb(l), Numb(r)) then Numb(l + r)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.431: 	      Mul(Numb(l), Numb(r)) then Numb(l * r)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.432: 	    else v
+//│ ║         	^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Object`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	             ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.430: 	      Add(Numb(l), Numb(r)) then Numb(l + r)
+//│ ║         	          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.431: 	      Mul(Numb(l), Numb(r)) then Numb(l * r)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.432: 	    else v
+//│ ║         	^^^^^^^^^^^
+//│ ╟── from application:
+//│ ║  l.430: 	      Add(Numb(l), Numb(r)) then Numb(l + r)
+//│ ╙──       	          ^^^^^^^
 //│ mixin EvalExpr() {
 //│   super: {eval: ('a, Var) -> 'b}
-//│   this: {eval: ('a, ??A & 'A | ??A0 & 'A0) -> (Object | ~??A1 & ~??A2)}
-//│   fun eval: ('a, 'b & (Add['A0] | Mul['A] | Numb | Var)) -> (Numb | 'b)
+//│   this: {eval: ('a, ??A & 'A | ??A0 & 'A0) -> anything}
+//│   fun eval: ('a, 'b & (Add['A] | Mul['A0] | Numb | Var)) -> (Numb | error | 'b)
 //│ }
 
 module Test2 extends EvalVar, EvalExpr
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.488: 	module Test2 extends EvalVar, EvalExpr
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.488: 	module Test2 extends EvalVar, EvalExpr
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.488: 	module Test2 extends EvalVar, EvalExpr
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.488: 	module Test2 extends EvalVar, EvalExpr
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.488: 	module Test2 extends EvalVar, EvalExpr
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.488: 	module Test2 extends EvalVar, EvalExpr
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.488: 	module Test2 extends EvalVar, EvalExpr
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.488: 	module Test2 extends EvalVar, EvalExpr
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
 //│ module Test2 {
-//│   fun eval: forall 'a. (Cons[{_1: anything, _2: 'A & (Object | ~??A | ~??A0 & ~??A1)} | ~??A2] | Nil, 'a & (Add['A0] | Mul['A1] | Numb | Var)) -> (Numb | Var | ??A3 & 'A1 | ??A & 'A | ??A4 & 'A0 | 'a)
+//│   fun eval: forall 'a. (Cons[anything] | Nil, 'a & (Add['A] | Mul['A0] | Numb | Var)) -> (Numb | Var | error | ??A & 'A | ??A0 & 'A0 | 'a)
 //│ }
-//│ where
-//│   'A0 <: Add['A0] | Mul['A1] | Numb | Var | ~??A4
-//│   'A1 <: Add['A0] | Mul['A1] | Numb | Var | ~??A3
 
 Test2.eval(Nil, Var("a"))
-//│ Numb | Var
+//│ Numb | Var | error
 //│ res
 //│     = Var {}
 
 Test2.eval(Cons(["c", Abs("d", Var("d"))], Nil), Var("a"))
-//│ Abs[Var] & ??A | Numb | Var
+//│ Numb | Var | error
 //│ res
 //│     = Var {}
 
 Test2.eval(Cons(["a", Numb(1)], Nil), Var("a"))
-//│ Numb | Var
+//│ Numb | Var | error
 //│ res
 //│     = Var {}
 
@@ -174,16 +633,16 @@ Test2.eval(Cons(["a", Numb(1)], Nil), Var("a"))
 :e
 Test2.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.175: 	Test2.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
+//│ ║  l.634: 	Test2.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
 //│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── application of type `Abs[?A]` does not match type `Add[?A0] | Mul[?A1] | Numb | Var`
-//│ ║  l.175: 	Test2.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
+//│ ║  l.634: 	Test2.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
 //│ ║         	                                                 ^^^^^^^^^^^^^^^^^^
 //│ ╟── Note: constraint arises from reference:
-//│ ║  l.127: 	  if v is
+//│ ║  l.417: 	  if v is
 //│ ║         	     ^
 //│ ╟── from reference:
-//│ ║  l.137: 	    let vv = map_expr(eta, v)
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
 //│ ╙──       	                           ^
 //│ Abs[Var] | Numb | Var | error
 //│ res
@@ -191,67 +650,938 @@ Test2.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
 //│   Error: non-exhaustive case expression
 
 Test2.eval(Cons(["a", Abs("d", Var("d"))], Nil), Add(Numb(1), Var("a")))
-//│ Abs[Var] & ??A | Add[Numb | Var] | Numb | Var
+//│ Add[Numb | Var] | Numb | Var | error
 //│ res
 //│     = Add {}
 
 module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `App[anything] & ??A` does not contain member `Abs#A`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `Abs[anything] & ??A` does not contain member `App#A`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	      Abs(x, t) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	        let s = gensym()
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.72: 	        Abs(s, this.eval(Cons([x, Var(s)], sub), t))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	    else
+//│ ║        	^^^^^^^^
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `App[anything] & ??A` does not contain member `Abs#A`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `Abs[anything] & ??A` does not contain member `App#A`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	      Abs(x, t) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	        let s = gensym()
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.72: 	        Abs(s, this.eval(Cons([x, Var(s)], sub), t))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	    else
+//│ ║        	^^^^^^^^
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `App[anything] & ??A` does not contain member `Abs#A`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `Abs[anything] & ??A` does not contain member `App#A`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	      Abs(x, t) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	        let s = gensym()
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.72: 	        Abs(s, this.eval(Cons([x, Var(s)], sub), t))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	    else
+//│ ║        	^^^^^^^^
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `App[anything] & ??A` does not contain member `Abs#A`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `Abs[anything] & ??A` does not contain member `App#A`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	      Abs(x, t) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	        let s = gensym()
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.72: 	        Abs(s, this.eval(Cons([x, Var(s)], sub), t))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	    else
+//│ ║        	^^^^^^^^
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Abs & ~#App` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ╙──      	      ^^^^^^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `App[anything] & ??A` does not contain member `Abs#A`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `Abs[anything] & ??A` does not contain member `App#A`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ╙──      	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Abs[?A0] & {Abs#A :> ?A1 <: ?A0} | App[?A2] & {App#A :> ?A3 <: ?A2} | ?a & ~#Abs & ~#App`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.657: 	module Test3 extends EvalVar, EvalExpr, EvalLambda
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.62: 	    if v is
+//│ ║        	       ^^^^
+//│ ║  l.63: 	      App(t1, t2) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.64: 	        let l1 = this.eval(sub, t1)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.65: 	        let l2 = this.eval(sub, t2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	        if t1 is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	          Abs(x, t) then this.eval(Cons([x, l2], Nil), t)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	        else
+//│ ║        	^^^^^^^^^^^^
+//│ ║  l.69: 	          App(l1, l2)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	      Abs(x, t) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	        let s = gensym()
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.72: 	        Abs(s, this.eval(Cons([x, Var(s)], sub), t))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.73: 	    else
+//│ ║        	^^^^^^^^
+//│ ║  l.74: 	      super.eval(sub, v)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.62: 	    if v is
+//│ ╙──      	       ^
 //│ module Test3 {
-//│   fun eval: (Cons[{_1: anything, _2: 'A} | ~??A] | Nil, Abs['A0] | App['A1] | Object & 'a & ~#Abs & ~#App) -> 'b
+//│   fun eval: (Cons[anything] | Nil, Abs[anything] | App[anything] | 'a & (Add[anything] | Mul[anything] | Numb | Var)) -> (??A & ~#Abs & ~#App | ??A0 & ~#Abs & ~#App | ??A1 & ~#Abs & ~#App | ??A2 & ~#Abs & ~#App | ??A3 & ~#Abs & ~#App | 'a)
 //│ }
 //│ where
-//│   'A :> 'b
-//│      <: Object | ~(??A0 & (??A1 | ??A2))
-//│   'b :> Abs['b] | App['b] | Numb | Var | ??A0 & 'A | 'a
-//│   'a <: Add[Abs['A0] | App['A1] | 'a & (Object & ~#Abs & ~#App | ~#Abs & ~#App & ~??A3) | ~??A3] | Mul[Abs['A0] | App['A1] | 'a & (Object & ~#Abs & ~#App | ~#Abs & ~#App & ~??A4) | ~??A4] | Numb | Var
-//│   'A0 <: Abs['A0] | App['A1] | 'a & (Object & ~#Abs & ~#App | ~#Abs & ~#App & ~??A5) | ~??A5
-//│   'A1 <: Abs['A0 & (Abs['A0] | App['A1] | Object & 'a & ~#Abs & ~#App | ~??A6)] | Abs['A0] & ~#Abs | App['A1] | Object & 'a & ~#Abs & ~#App | ~??A7
+//│   'a :> Abs['a] | App['a] | Numb | Var | error | ??A & ~#Abs & ~#App | ??A0 & ~#Abs & ~#App | ??A1 & ~#Abs & ~#App | ??A2 & ~#Abs & ~#App | ??A3 & ~#Abs & ~#App
 
 Test3.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
-//│ 'a
+//│ ??A & ~#Abs & ~#App | ??A0 & ~#Abs & ~#App | ??A1 & ~#Abs & ~#App | ??A2 & ~#Abs & ~#App | ??A3 & ~#Abs & ~#App | 'a
 //│   where
-//│     'a :> Abs[Var] & ??A | Numb | Var | Abs['a] | App['a]
+//│     'a :> Abs['a] | App['a] | Numb | Var | error | ??A & ~#Abs & ~#App | ??A0 & ~#Abs & ~#App | ??A1 & ~#Abs & ~#App | ??A2 & ~#Abs & ~#App | ??A3 & ~#Abs & ~#App
 //│ res
 //│     = Abs {}
 
 Test3.eval(Cons(["c", Abs("d", Var("d"))], Nil), App(Abs("a", Var("a")), Add(Numb(1), Var("c"))))
-//│ 'a
+//│ ??A & ~#Abs & ~#App | ??A0 & ~#Abs & ~#App | ??A1 & ~#Abs & ~#App | ??A2 & ~#Abs & ~#App | ??A3 & ~#Abs & ~#App | 'a
 //│   where
-//│     'a :> Abs['a] | App['a] | Abs[Var] & ??A | Add[Numb | Var] & ??A0 | Numb | Var
+//│     'a :> Abs['a] | App['a] | Numb | Var | error | ??A & ~#Abs & ~#App | ??A0 & ~#Abs & ~#App | ??A1 & ~#Abs & ~#App | ??A2 & ~#Abs & ~#App | ??A3 & ~#Abs & ~#App
 //│ res
 //│     = Var {}
 
 // * Incorrect version, for regression testing – EvalLambda should be mixed in after EvalExpr
 module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A] & {Add#A :> ?A0 <: ?A} | Mul[?A1] & {Mul#A :> ?A2 <: ?A1} | Numb | Var`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ║         	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.49: 	class Abs[A](x: Str, t: A)
+//│ ║        	                     ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Mul#A`
+//│ ║  l.411: 	class Mul[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#A`
+//│ ║  l.410: 	class Add[A](l: A, r: A)
+//│ ╙──       	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?A0] & {Add#A :> ?A1 <: ?A0} | Mul[?A2] & {Mul#A :> ?A3 <: ?A2} | Numb | Var`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.1249: 	module Test3 extends EvalVar, EvalLambda, EvalExpr
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.50: 	class App[A](s: A, t: A)
+//│ ║        	                   ^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.417: 	  if v is
+//│ ║         	     ^^^^
+//│ ║  l.418: 	    Var then v
+//│ ║         	^^^^^^^^^^^^^^
+//│ ║  l.419: 	    Numb then v
+//│ ║         	^^^^^^^^^^^^^^^
+//│ ║  l.420: 	    Add(l, r) then Add(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.421: 	    Mul(l, r) then Mul(f(l), f(r))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
+//│ ╙──       	                           ^
 //│ module Test3 {
-//│   fun eval: (Cons[{_1: anything, _2: 'A} | ~??A] | Nil, 'a & (Add['A0] | Mul['A1] | Numb | Var)) -> (??A0 & 'A1 | ??A1 & 'A0 | 'a | 'b)
+//│   fun eval: (Cons[anything] | Nil, 'a & (Add['A] | Mul['A0] | Numb | Var)) -> (??A & ??A0 | ??A1 & 'A | ??A2 & 'A0 | 'a)
 //│ }
 //│ where
-//│   'A :> 'b
-//│      <: Object | ~(??A2 & (??A3 | ??A4))
-//│   'b :> Abs['b] | App['b] | Var | ??A2 & 'A | Numb | ??A0 & 'A1 | ??A1 & 'A0 | 'a
-//│   'A1 <: Add['A0] | Mul['A1] | Numb | Var | ~??A0
-//│   'A0 <: Add['A0] | Mul['A1] | Numb | Var | ~??A1
+//│   'a :> Abs['a] | App['a] | Var | error | ??A & ??A0 | ??A2 & (error | 'A0) | ??A1 & (error | 'A) | Numb
 
 // * Because EvalExpr does not dispatch lambdas to super and map_expr only
 // * handles exprs
 :e
 Test3.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.239: 	Test3.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
-//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.1569: 	Test3.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
+//│ ║          	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── application of type `Abs[?A]` does not match type `Add[?A0] | Mul[?A1] | Numb | Var`
-//│ ║  l.239: 	Test3.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
-//│ ║         	                                                 ^^^^^^^^^^^^^^^^^^
+//│ ║  l.1569: 	Test3.eval(Cons(["c", Abs("d", Var("d"))], Nil), Abs("a", Var("a")))
+//│ ║          	                                                 ^^^^^^^^^^^^^^^^^^
 //│ ╟── Note: constraint arises from reference:
-//│ ║  l.127: 	  if v is
+//│ ║  l.417: 	  if v is
 //│ ║         	     ^
 //│ ╟── from reference:
-//│ ║  l.137: 	    let vv = map_expr(eta, v)
+//│ ║  l.427: 	    let vv = map_expr(eta, v)
 //│ ╙──       	                           ^
-//│ error | 'a
+//│ ??A & ??A0 | 'a
 //│   where
-//│     'a :> Abs['a] | App['a] | Var | Abs[Var] | Numb
+//│     'a :> Abs['a] | App['a] | Var | error | Abs[Var] | Numb | error & ??A1 | ??A & ??A0
 //│ res
 //│ Runtime error:
 //│   Error: non-exhaustive case expression

@@ -44,17 +44,117 @@ mixin EvalNeg {
 //│ }
 
 module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.46: 	module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Add & ~#Lit & ~#Neg` does not match type `nothing`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.25: 	    else super.eval(e)
+//│ ║        	                    ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.25: 	    else super.eval(e)
+//│ ╙──      	         ^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `Lit & ??A` does not contain member `Add#E`
+//│ ║  l.6: 	class Add[E](lhs: E, rhs: E)
+//│ ╙──     	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.46: 	module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Neg` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | ?a & ~#Add & ~#Lit`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.22: 	    if e is
+//│ ║        	       ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.30: 	    else super.eval(e)
+//│ ╙──      	         ^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.46: 	module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??A & ~#Neg` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.22: 	    if e is
+//│ ║        	       ^^^^
+//│ ║  l.23: 	      Lit(n) then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^
+//│ ║  l.24: 	      Add(l, r) then this.eval(l) + this.eval(r)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.25: 	    else super.eval(e)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.30: 	    else super.eval(e)
+//│ ╙──      	         ^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.46: 	module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.5: 	class Neg[A](expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.29: 	    if e is Neg(d) then 0 - this.eval(d)
+//│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.30: 	    else super.eval(e)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.29: 	    if e is Neg(d) then 0 - this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.46: 	module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??E & ~#Add & ~#Lit & ~#Neg` does not match type `nothing`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.25: 	    else super.eval(e)
+//│ ║        	                    ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.25: 	    else super.eval(e)
+//│ ╙──      	         ^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type `Lit & ??E` does not contain member `Add#E`
+//│ ║  l.6: 	class Add[E](lhs: E, rhs: E)
+//│ ╙──     	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.46: 	module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??E & ~#Neg` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | ?a & ~#Add & ~#Lit`
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.22: 	    if e is
+//│ ║        	       ^
+//│ ╟── from wildcard pattern:
+//│ ║  l.30: 	    else super.eval(e)
+//│ ╙──      	         ^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.46: 	module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── expression of type `??E & ~#Neg` is not an instance of type `Object`
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.22: 	    if e is
+//│ ║        	       ^^^^
+//│ ║  l.23: 	      Lit(n) then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^
+//│ ║  l.24: 	      Add(l, r) then this.eval(l) + this.eval(r)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.25: 	    else super.eval(e)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from wildcard pattern:
+//│ ║  l.30: 	    else super.eval(e)
+//│ ╙──      	         ^^^^^^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.46: 	module TestLang extends EvalNothing, EvalAddLit, EvalNeg
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??E & ?E` is not an instance of type `Object`
+//│ ║  l.6: 	class Add[E](lhs: E, rhs: E)
+//│ ║       	                     ^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.29: 	    if e is Neg(d) then 0 - this.eval(d)
+//│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.30: 	    else super.eval(e)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.29: 	    if e is Neg(d) then 0 - this.eval(d)
+//│ ╙──      	       ^
 //│ module TestLang {
-//│   fun eval: (Neg['A] | Object & 'a & ~#Neg) -> Int
+//│   fun eval: (Add[anything] | Lit | Neg[anything]) -> Int
 //│ }
-//│ where
-//│   'A <: Neg['A] | 'a & (Object & ~#Neg | ~#Neg & ~??A) | ~??A
-//│   'a <: Add[Neg['A] | 'a & (Object & ~#Neg | ~#Neg & ~??E) | ~??E] | Lit
 
 TestLang.eval
-//│ (Neg['A] | Object & 'a & ~#Neg) -> Int
-//│   where
-//│     'A <: Neg['A] | 'a & (Object & ~#Neg | ~#Neg & ~??A) | ~??A
-//│     'a <: Add[Neg['A] | 'a & (Object & ~#Neg | ~#Neg & ~??E) | ~??E] | Lit
+//│ (Add[anything] | Lit | Neg[anything]) -> Int
 
 

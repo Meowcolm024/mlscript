@@ -32,30 +32,26 @@ fun bar(c) = if c is
     C(y) then y + 1
     B    then 0
   else 1
-//│ fun bar: (C[Int | ~??A] | Object & ~#C) -> Int
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.31: 	fun bar(c) = if c is
+//│ ║        	                ^^^^
+//│ ║  l.32: 	    C(y) then y + 1
+//│ ║        	^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Int`
+//│ ║  l.4: 	class C[A](x: A) {
+//│ ║       	           ^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.32: 	    C(y) then y + 1
+//│ ╙──      	              ^
+//│ fun bar: (C[anything] | Object & ~#C) -> (Int | error)
 
 bar(c)
-//│ Int
+//│ Int | error
 //│ res
 //│     = 124
 
 :e
 bar(C(true))
-//│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.43: 	bar(C(true))
-//│ ║        	^^^^^^^^^^^^
-//│ ╟── reference of type `true` does not match type `Int | ~??A`
-//│ ║  l.43: 	bar(C(true))
-//│ ║        	      ^^^^
-//│ ╟── Note: constraint arises from reference:
-//│ ║  l.32: 	    C(y) then y + 1
-//│ ║        	              ^
-//│ ╟── from field selection:
-//│ ║  l.4: 	class C[A](x: A) {
-//│ ║       	           ^
-//│ ╟── Note: type parameter A is defined at:
-//│ ║  l.4: 	class C[A](x: A) {
-//│ ╙──     	        ^
 //│ Int | error
 //│ res
 //│     = 2

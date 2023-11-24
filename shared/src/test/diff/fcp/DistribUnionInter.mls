@@ -17,7 +17,26 @@ def bar(f: 1 -> ('d | (forall 'c. 'c -> 'c))) = 1
 
 // * Still works because we distribute from the right
 bar foo
-//│ res: 1
+//│ ╔══[ERROR] Type error in application
+//│ ║  l.19: 	bar foo
+//│ ║        	^^^^^^^
+//│ ╟── type variable `'c` leaks out of its scope
+//│ ║  l.14: 	def bar(f: 1 -> ('d | (forall 'c. 'c -> 'c))) = 1
+//│ ║        	                                  ^^
+//│ ╟── back into type variable `'c`
+//│ ║  l.14: 	def bar(f: 1 -> ('d | (forall 'c. 'c -> 'c))) = 1
+//│ ║        	                                        ^^
+//│ ╟── adding a type annotation to any of the following terms may help resolve the problem
+//│ ╟── • this reference:
+//│ ║  l.19: 	bar foo
+//│ ║        	    ^^^
+//│ ╟── • this function:
+//│ ║  l.14: 	def bar(f: 1 -> ('d | (forall 'c. 'c -> 'c))) = 1
+//│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── • this reference:
+//│ ║  l.19: 	bar foo
+//│ ╙──      	^^^
+//│ res: 1 | error
 //│    = <no result>
 //│      foo is not implemented
 
@@ -33,23 +52,23 @@ bar
 :e
 bar foo
 //│ ╔══[ERROR] Type error in application
-//│ ║  l.34: 	bar foo
+//│ ║  l.53: 	bar foo
 //│ ║        	^^^^^^^
 //│ ╟── type variable `'c` leaks out of its scope
-//│ ║  l.24: 	def bar(f: 1 -> ('d & (forall 'c. 'c -> 'c))) = 1
+//│ ║  l.43: 	def bar(f: 1 -> ('d & (forall 'c. 'c -> 'c))) = 1
 //│ ║        	                                  ^^
 //│ ╟── back into type variable `'c`
-//│ ║  l.24: 	def bar(f: 1 -> ('d & (forall 'c. 'c -> 'c))) = 1
+//│ ║  l.43: 	def bar(f: 1 -> ('d & (forall 'c. 'c -> 'c))) = 1
 //│ ║        	                                        ^^
 //│ ╟── adding a type annotation to any of the following terms may help resolve the problem
 //│ ╟── • this reference:
-//│ ║  l.34: 	bar foo
+//│ ║  l.53: 	bar foo
 //│ ║        	    ^^^
 //│ ╟── • this function:
-//│ ║  l.24: 	def bar(f: 1 -> ('d & (forall 'c. 'c -> 'c))) = 1
+//│ ║  l.43: 	def bar(f: 1 -> ('d & (forall 'c. 'c -> 'c))) = 1
 //│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── • this reference:
-//│ ║  l.34: 	bar foo
+//│ ║  l.53: 	bar foo
 //│ ╙──      	^^^
 //│ res: 1 | error
 //│    = <no result>

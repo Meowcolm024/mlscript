@@ -233,13 +233,24 @@ fun fv(t) =
     Var(name) then list1(name)
     Abs(Var(name), body) then listWithout(fv(body), name)
     App(lhs, rhs) then listConcat(fv(lhs), fv(rhs))
-//│ fun fv: forall 'A 'A0 'A1. (Abs | App | Var) -> (Cons[in 'A1 out 'A] | Cons[in 'A0 out 'A] | Nil)
+//│ ╔══[ERROR] Subtyping constraint of the form `?a -> (?b | ?c | ?d) <: ?fv` took too many steps and ran out of fuel (10000)
+//│ ║  l.231: 	fun fv(t) =
+//│ ║         	    ^^^^^^^
+//│ ║  l.232: 	  if t is
+//│ ║         	^^^^^^^^^
+//│ ║  l.233: 	    Var(name) then list1(name)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.234: 	    Abs(Var(name), body) then listWithout(fv(body), name)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.235: 	    App(lhs, rhs) then listConcat(fv(lhs), fv(rhs))
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╙── Note: use flag `:ex` to see internal error info.
+//│ fun fv: forall 'A 'A0. (Abs | App | Var) -> (Cons[in 'A0 out 'A0 | ??A] | Cons[in 'A out 'A | ??A0] | Nil)
 //│   where
-//│     'A1 :> 'A | ??A & (Str | 'A)
-//│         <: 'A0
-//│     'A :> 'A0 | 'A1
-//│     'A0 :> 'A | ??A & 'A | ??A0 & 'A
-//│         <: 'A1 | ~??A
+//│     'A0 :> anything
+//│         <: 'A
+//│     'A :> anything
+//│        <: 'A0 | ~??A
 
 fun showFv(t) =
   showTerm(t) ++ if fv(t) is

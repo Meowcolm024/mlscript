@@ -43,17 +43,48 @@ fun process(e) =
     Pair(Vec(xs), Vec(ys))  then n
     Pair(Vec(n),  Numb(n)) then n
     Pair(Numb(n), Vec(n))  then n
-//│ fun process: Pair[Numb | Vec | ~??A, Numb | Vec | ~??B] -> (Int | Numb | Array[Numb | Vec])
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.41: 	  if e is
+//│ ║        	     ^^^^
+//│ ║  l.42: 	    Pair(Numb(n), Numb(m)) then Numb(n + m)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.43: 	    Pair(Vec(xs), Vec(ys))  then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.44: 	    Pair(Vec(n),  Numb(n)) then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.45: 	    Pair(Numb(n), Vec(n))  then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` does not match type `Numb | Vec`
+//│ ║  l.35: 	class Pair[A,B](a: A, b: B)
+//│ ║        	                ^
+//│ ╟── Note: constraint arises from application:
+//│ ║  l.42: 	    Pair(Numb(n), Numb(m)) then Numb(n + m)
+//│ ╙──      	         ^^^^^^^
+//│ fun process: Pair[anything, anything] -> error
 
 
 // * FIXME should warn, be rejected, or compare both values for equality
 fun process(e) =
   if e is
     Pair(Numb(n), Numb(n)) then n
-//│ fun process: Pair[Numb | ~??A, Numb | ~??B] -> Int
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.68: 	  if e is
+//│ ║        	     ^^^^
+//│ ║  l.69: 	    Pair(Numb(n), Numb(n)) then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Numb`
+//│ ║  l.35: 	class Pair[A,B](a: A, b: B)
+//│ ║        	                ^
+//│ ╟── Note: constraint arises from class pattern:
+//│ ║  l.69: 	    Pair(Numb(n), Numb(n)) then n
+//│ ║        	         ^^^^
+//│ ╟── from application:
+//│ ║  l.69: 	    Pair(Numb(n), Numb(n)) then n
+//│ ╙──      	         ^^^^^^^
+//│ fun process: Pair[anything, anything] -> error
 
 process(Pair(Numb(1), Numb(2)))
-//│ Int
+//│ error
 //│ res
 //│     = 2
 

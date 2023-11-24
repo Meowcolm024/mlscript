@@ -81,6 +81,14 @@ fun f(x, y) =
   if x is
     Some(x) and y is
       Some(y) then 0
+//│ ╔══[ERROR] Type mismatch in reference:
+//│ ║  l.81: 	  if x is
+//│ ║        	     ^
+//│ ╙── reference of type `?a` does not match type `{value: ?value}`
+//│ ╔══[ERROR] Type mismatch in reference:
+//│ ║  l.82: 	    Some(x) and y is
+//│ ║        	                ^
+//│ ╙── reference of type `?a` does not match type `{value: ?value}`
 //│ f: (Some, Some,) -> 0
 //│  = [Function: f4]
 
@@ -119,14 +127,14 @@ fun f(x, y) =
     Some(xv) and y is Some(yv) then xv + yv
     None() and y is None() then 0
 //│ ╔══[ERROR] The match is not exhaustive.
-//│ ║  l.119: 	    Some(xv) and y is Some(yv) then xv + yv
+//│ ║  l.127: 	    Some(xv) and y is Some(yv) then xv + yv
 //│ ║         	                 ^^^^^^^^^^^^^
 //│ ╟── The scrutinee at this position misses 1 case.
-//│ ║  l.119: 	    Some(xv) and y is Some(yv) then xv + yv
+//│ ║  l.127: 	    Some(xv) and y is Some(yv) then xv + yv
 //│ ║         	                 ^
 //│ ╟── [Missing Case 1/1] `None`
 //│ ╟── It first appears here.
-//│ ║  l.120: 	    None() and y is None() then 0
+//│ ║  l.128: 	    None() and y is None() then 0
 //│ ╙──       	                    ^^^^^^
 //│ f: (anything, anything,) -> error
 //│ Code generation encountered an error:
@@ -142,14 +150,14 @@ fun f(x, y) =
     None() and y is
       Some(yv) then yv * 3
 //│ ╔══[ERROR] The match is not exhaustive.
-//│ ║  l.142: 	    None() and y is
+//│ ║  l.150: 	    None() and y is
 //│ ║         	               ^^^^
 //│ ╟── The scrutinee at this position misses 1 case.
-//│ ║  l.142: 	    None() and y is
+//│ ║  l.150: 	    None() and y is
 //│ ║         	               ^
 //│ ╟── [Missing Case 1/1] `None`
 //│ ╟── It first appears here.
-//│ ║  l.141: 	      None() then xv * 2
+//│ ║  l.149: 	      None() then xv * 2
 //│ ╙──       	      ^^^^^^
 //│ f: (anything, anything,) -> error
 //│ Code generation encountered an error:
@@ -180,13 +188,13 @@ fun f(x, y) =
       <  0 then "le"
       == 0 then "eq"
 //│ ╔══[ERROR] The case when this is false is not handled: ==(y,)(0,)
-//│ ║  l.178: 	    Some(x) and y
+//│ ║  l.186: 	    Some(x) and y
 //│ ║         	                ^
-//│ ║  l.179: 	      >  0 then "gt"
+//│ ║  l.187: 	      >  0 then "gt"
 //│ ║         	^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.180: 	      <  0 then "le"
+//│ ║  l.188: 	      <  0 then "le"
 //│ ║         	^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.181: 	      == 0 then "eq"
+//│ ║  l.189: 	      == 0 then "eq"
 //│ ╙──       	^^^^^^^^^^
 //│ f: (anything, anything,) -> error
 //│ Code generation encountered an error:
@@ -201,6 +209,10 @@ fun f(x, allowNone) =
     Some(x) and isValid(x) then "good"
     None() and allowNone then "okay"
     else "bad"
+//│ ╔══[ERROR] Type mismatch in reference:
+//│ ║  l.208: 	  if x is
+//│ ║         	     ^
+//│ ╙── reference of type `?a` does not match type `{value: ?value}`
 //│ f: (anything, anything,) -> ("bad" | "good" | "okay")
 //│  = [Function: f12]
 
@@ -210,6 +222,10 @@ fun f(x) =
     Some(x) then "roll"
     _ and x == 0 then 0
     _ then "rock"
+//│ ╔══[ERROR] Type mismatch in reference:
+//│ ║  l.220: 	  if x is
+//│ ║         	     ^
+//│ ╙── reference of type `?a` does not match type `{value: ?value}`
 //│ f: (None | Some | number) -> ("bruh" | "rock" | "roll" | 0)
 //│  = [Function: f13]
 
@@ -260,24 +276,24 @@ fun f(u, v, w) =
       Right(_) then "right-defined"
     None then "undefined"
 //│ ╔══[ERROR] Type mismatch in `case` expression:
-//│ ║  l.257: 	  if foo(u, v, w) is
+//│ ║  l.273: 	  if foo(u, v, w) is
 //│ ║         	     ^^^^^^^^^^^^^^^
-//│ ║  l.258: 	    Some(x) and x is
+//│ ║  l.274: 	    Some(x) and x is
 //│ ║         	^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.259: 	      Left(_) then "left-defined"
+//│ ║  l.275: 	      Left(_) then "left-defined"
 //│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.260: 	      Right(_) then "right-defined"
+//│ ║  l.276: 	      Right(_) then "right-defined"
 //│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.261: 	    None then "undefined"
+//│ ║  l.277: 	    None then "undefined"
 //│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── operator application of type `int` does not match type `Left & ?a | Right & ?b`
-//│ ║  l.245: 	  if x - y > 0 then Some(x + y + z) else None()
+//│ ║  l.261: 	  if x - y > 0 then Some(x + y + z) else None()
 //│ ║         	                         ^^^^^^^^^
 //│ ╟── Note: constraint arises from reference:
-//│ ║  l.258: 	    Some(x) and x is
+//│ ║  l.274: 	    Some(x) and x is
 //│ ║         	                ^
 //│ ╟── from application:
-//│ ║  l.257: 	  if foo(u, v, w) is
+//│ ║  l.273: 	  if foo(u, v, w) is
 //│ ╙──       	     ^^^^^^^^^^^^
 //│ f: (int, int, int,) -> ("left-defined" | "right-defined" | "undefined")
 //│  = [Function: f16]
@@ -356,7 +372,7 @@ fun f(x) =
     0 ::
       Nil() then "oh"
 //│ ╔══[ERROR] Cannot find operator `::` in the context
-//│ ║  l.356: 	    0 ::
+//│ ║  l.372: 	    0 ::
 //│ ╙──       	      ^^
 //│ f: anything -> error
 //│ Code generation encountered an error:

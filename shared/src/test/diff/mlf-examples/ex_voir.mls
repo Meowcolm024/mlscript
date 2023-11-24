@@ -134,7 +134,38 @@ def make_ex3 x (f: forall 'a. ('a | Sid) -> 'b) = f x
 def ex_list3 = cons (make_ex3 succ) (
       cons (make_ex3 id) (
       cons (make_ex3 not) nil))
-//│ ex_list3: List[forall 'a. (anything -> 'a) -> 'a]
+//│ ╔══[ERROR] Type error in application
+//│ ║  l.134: 	def ex_list3 = cons (make_ex3 succ) (
+//│ ║         	                     ^^^^^^^^^^^^^
+//│ ╟── type variable `'a` leaks out of its scope
+//│ ║  l.45: 	type Sid = forall 'a. 'a -> 'a
+//│ ║        	                      ^^
+//│ ╟── into reference of type `int`
+//│ ║  l.56: 	def succ n = n + 1
+//│ ║        	             ^
+//│ ╟── adding a type annotation to any of the following terms may help resolve the problem
+//│ ╟── • this reference:
+//│ ║  l.126: 	def make_ex3 x (f: forall 'a. ('a | Sid) -> 'b) = f x
+//│ ║         	                                                    ^
+//│ ╟── • this function:
+//│ ║  l.56: 	def succ n = n + 1
+//│ ║        	         ^^^^^^^^^
+//│ ╟── • this reference:
+//│ ║  l.134: 	def ex_list3 = cons (make_ex3 succ) (
+//│ ║         	                              ^^^^
+//│ ╟── • this reference:
+//│ ║  l.134: 	def ex_list3 = cons (make_ex3 succ) (
+//│ ╙──       	                     ^^^^^^^^
+//│ ╔══[ERROR] Type mismatch in application:
+//│ ║  l.136: 	      cons (make_ex3 not) nil))
+//│ ║         	            ^^^^^^^^^^^^
+//│ ╟── type `'a` is not an instance of type `bool`
+//│ ║  l.45: 	type Sid = forall 'a. 'a -> 'a
+//│ ║        	                      ^^
+//│ ╟── Note: quantified type variable 'a is defined at:
+//│ ║  l.45: 	type Sid = forall 'a. 'a -> 'a
+//│ ╙──      	                  ^^
+//│ ex_list3: List[forall 'a. error | (anything -> 'a) -> 'a]
 //│         = [Function: ex_list3]
 
 

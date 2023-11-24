@@ -69,16 +69,39 @@ fun add(e) =
       Vectr of map of xs, x => add of Pair of x, Numbr(n)
     Pair(Numbr(n), Vectr(xs)) then
       Vectr of map of xs, x => add of Pair of Numbr(n), x
-//│ fun add: Pair[Numbr | Vectr | ~??A, Numbr | Vectr | ~??B] -> (Numbr | Vectr)
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.64: 	  if e is
+//│ ║        	     ^^^^
+//│ ║  l.65: 	    Pair(Numbr(n), Numbr(m)) then Numbr(n + m)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.66: 	    Pair(Vectr(xs), Vectr(ys)) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.67: 	      Vectr of map of zip(xs, ys), ([x, y]) => add of Pair of x, y
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.68: 	    Pair(Vectr(xs),  Numbr(n)) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.69: 	      Vectr of map of xs, x => add of Pair of x, Numbr(n)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.70: 	    Pair(Numbr(n), Vectr(xs)) then
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.71: 	      Vectr of map of xs, x => add of Pair of Numbr(n), x
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` does not match type `Numbr | Vectr`
+//│ ║  l.52: 	class Pair[A, B](a: A, b: B)
+//│ ║        	                 ^
+//│ ╟── Note: constraint arises from application:
+//│ ║  l.65: 	    Pair(Numbr(n), Numbr(m)) then Numbr(n + m)
+//│ ╙──      	         ^^^^^^^^
+//│ fun add: Pair[anything, anything] -> error
 
 
 add(Pair(Numbr(0), Numbr(1)))
-//│ Numbr | Vectr
+//│ error
 //│ res
 //│     = Numbr {}
 
 add(Pair(Vectr([]), Vectr([])))
-//│ Numbr | Vectr
+//│ error
 //│ res
 //│     = Vectr {}
 
@@ -96,7 +119,7 @@ unbox(v)
 
 
 let res = add of Pair of (Vectr of [Numbr(1), Numbr(2)]), (Vectr of [Numbr(3), v])
-//│ let res: Numbr | Vectr
+//│ let res: error
 //│ res
 //│     = Vectr {}
 
@@ -112,10 +135,26 @@ fun add2(e) =
   if e is
     Pair(Numbr(n), Numbr(m)) then Numbr(m + m)
     Pair(Numbr(n), Vectr(n)) then n
-//│ fun add2: Pair[Numbr | ~??A, Numbr | Vectr | ~??B] -> (Numbr | Array[Numbr | Vectr])
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.135: 	  if e is
+//│ ║         	     ^^^^
+//│ ║  l.136: 	    Pair(Numbr(n), Numbr(m)) then Numbr(m + m)
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.137: 	    Pair(Numbr(n), Vectr(n)) then n
+//│ ║         	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Numbr`
+//│ ║  l.52: 	class Pair[A, B](a: A, b: B)
+//│ ║        	                 ^
+//│ ╟── Note: constraint arises from class pattern:
+//│ ║  l.136: 	    Pair(Numbr(n), Numbr(m)) then Numbr(m + m)
+//│ ║         	         ^^^^^
+//│ ╟── from application:
+//│ ║  l.136: 	    Pair(Numbr(n), Numbr(m)) then Numbr(m + m)
+//│ ╙──       	         ^^^^^^^^
+//│ fun add2: Pair[anything, anything] -> error
 
 add2(Pair(Numbr(0), Numbr(1)))
-//│ Numbr | Array[Numbr | Vectr]
+//│ error
 //│ res
 //│     = Numbr {}
 
@@ -173,7 +212,7 @@ s([Numbr(0),Numbr(0)])
 //│ ║  l.+1: 	s([Numbr(0),Numbr(0)])
 //│ ║        	 ^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── Note: constraint arises from tuple type:
-//│ ║  l.136: 	fun s: ([Numbr,Numbr] -> Int) & ([Vectr,Vectr] -> Int)
+//│ ║  l.175: 	fun s: ([Numbr,Numbr] -> Int) & ([Vectr,Vectr] -> Int)
 //│ ╙──       	        ^^^^^^^^^^^^^
 //│ Int | error
 
@@ -234,21 +273,6 @@ add2(Pair(Vectr(0), Numbr(1)))
 //│ ╟── Note: constraint arises from applied type reference:
 //│ ║  l.48: 	class Vectr(xs: Array[Numbr | Vectr])
 //│ ╙──      	                ^^^^^^^^^^^^^^^^^^^^
-//│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.+1: 	add2(Pair(Vectr(0), Numbr(1)))
-//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//│ ╟── application of type `Vectr` does not match type `Numbr | ~??A`
-//│ ║  l.+1: 	add2(Pair(Vectr(0), Numbr(1)))
-//│ ║        	          ^^^^^^^^
-//│ ╟── Note: constraint arises from class pattern:
-//│ ║  l.113: 	    Pair(Numbr(n), Numbr(m)) then Numbr(m + m)
-//│ ║         	         ^^^^^
-//│ ╟── from field selection:
-//│ ║  l.52: 	class Pair[A, B](a: A, b: B)
-//│ ║        	                 ^
-//│ ╟── Note: type parameter A is defined at:
-//│ ║  l.52: 	class Pair[A, B](a: A, b: B)
-//│ ╙──      	           ^
-//│ Numbr | error | Array[Numbr | Vectr]
+//│ error
 
 

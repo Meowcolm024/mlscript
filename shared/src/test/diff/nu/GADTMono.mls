@@ -9,18 +9,18 @@ class Some[T](get: T) extends Option[T]
 //│ class Some[T](get: T) extends Option
 
 fun getOr(x, d) = if x is
-    None then d
-    Some(g) then g
+  None then d
+  Some(g) then g
 //│ fun getOr: forall 'T 'a. (None | Some['T], 'a) -> (??T & 'T | 'a)
 
 fun getOr(x: Option['a], d) = if x is
-    None then d
-    Some(g) then g
+  None then d
+  Some(g) then g
 //│ fun getOr: forall 'a 'b. (x: Option['a], 'b) -> (??T & 'a | 'b)
 
 fun getOr[T](x: Option[T], d: T): T = if x is
-    None then d
-    Some(g) then g
+  None then d
+  Some(g) then g
 //│ fun getOr: forall 'T. (x: Option['T], d: 'T) -> 'T
 
 fun get(x) = if x is Some(r) then r else error
@@ -40,4 +40,209 @@ fun get(x: Option['a]): x.T = if x is Some(r) then r else error
 // Some[?a1] & ?c0 <: Bot
 // ?c0 <: ~Some[?a1]
 
+
+:d
+fun getOr(x) = if x is
+  Some(g) then g.x
+//│ 0. Typing ‹fun getOr = (x,) => if x is ‹(Some(g,)) then (g).x››
+//│ | 0. Created lazy type info for fun getOr = (x,) => if x is ‹(Some(g,)) then (g).x›
+//│ | Completing fun getOr = (x,) => if x is ‹(Some(g,)) then (g).x›
+//│ | | Type params 
+//│ | | Params 
+//│ | | 1. Typing term (x,) => if x is ‹(Some(g,)) then (g).x›
+//│ | | | 1. Typing pattern [x,]
+//│ | | | | 1. Typing pattern x
+//│ | | | | 1. : x177'
+//│ | | | 1. : (x177',)
+//│ | | | 1. Typing term if x is ‹(Some(g,)) then (g).x›
+//│ | | | | [Desugarer.destructPattern] scrutinee = x; pattern = Some(g,)
+//│ | | | | [Desugarer.destructPattern] Result: «x is Some»
+//│ | | | | Desugared term: case x of { Some => (([g,],) => (g).x)((Some).unapply(x,),) }
+//│ | | | | 1. Typing term case x of { Some => (([g,],) => (g).x)((Some).unapply(x,),) }
+//│ | | | | | 1. Typing term x
+//│ | | | | | 1. : x177'
+//│ | | | | | CONSTRAIN x177' <! Object
+//│ | | | | |   where 
+//│ | | | | | 1. C x177' <! Object    (0)
+//│ | | | | | | NEW x177' UB (0)
+//│ | | | | | >>>c Map(T -> NuParam(TypeName(T),mut T29_36'#..T29_36'#,true), Some#T -> NuParam(TypeName(T),mut T34'..T34',true), get -> NuParam(get,‘T34',false))
+//│ | | | | | Match arm Some: #Some<Object,Option> & {Some#T: mut T34_178'..T34_179'} intl {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}
+//│ | | | | | var rfn: x :: x177' & #Some<Object,Option> & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}
+//│ | | | | | 2. Typing term (([g,],) => (g).x)((Some).unapply(x,),)
+//│ | | | | | | 2. Typing term ([g,],) => (g).x
+//│ | | | | | | | 2. Typing pattern [[g,],]
+//│ | | | | | | | | 2. Typing pattern [g,]
+//│ | | | | | | | | | 2. Typing pattern g
+//│ | | | | | | | | | 2. : g182''
+//│ | | | | | | | | 2. : (g182'',)
+//│ | | | | | | | 2. : ((g182'',),)
+//│ | | | | | | | 2. Typing term (g).x
+//│ | | | | | | | | 2. Typing term g
+//│ | | | | | | | | 2. : g182''
+//│ | | | | | | | | CONSTRAIN g182'' <! {x: x183''}
+//│ | | | | | | | |   where 
+//│ | | | | | | | | 2. C g182'' <! {x: x183''}    (0)
+//│ | | | | | | | | | NEW g182'' UB (2)
+//│ | | | | | | | 2. : x183''
+//│ | | | | | | 2. : ([g182'',] -> x183'')
+//│ | | | | | | 2. Typing term (Some).unapply(x,)
+//│ | | | | | | | 2. Typing term (Some).unapply
+//│ | | | | | | | | 2. Typing term (x::13,) => let _ = x : Some in [(x).#get,]
+//│ | | | | | | | | | TYPING POLY LAM
+//│ | | | | | | | | | 3. Typing pattern [x::13,]
+//│ | | | | | | | | | | 3. Typing pattern x::13
+//│ | | | | | | | | | | 3. : x184'''
+//│ | | | | | | | | | 3. : (x184''',)
+//│ | | | | | | | | | 3. Typing term let _ = x : Some in [(x).#get,]
+//│ | | | | | | | | | | 3. Typing term x : Some
+//│ | | | | | | | | | | | 3. Typing term x
+//│ | | | | | | | | | | | 3. : x184'''
+//│ | | | | | | | | | | | Typing type TypeName(Some)
+//│ | | | | | | | | | | | | vars=Map() newDefsInfo=Map()
+//│ | | | | | | | | | | | | 3. type TypeName(Some)
+//│ | | | | | | | | | | | | => #Some<Object,Option>
+//│ | | | | | | | | | | | => #Some<Object,Option> ——— 
+//│ | | | | | | | | | | | CONSTRAIN x184''' <! #Some<Object,Option>
+//│ | | | | | | | | | | |   where 
+//│ | | | | | | | | | | | 3. C x184''' <! #Some<Object,Option>    (0)
+//│ | | | | | | | | | | | | NEW x184''' UB (0)
+//│ | | | | | | | | | | 3. : #Some<Object,Option>
+//│ | | | | | | | | | | 3. Typing term [(x).#get,]
+//│ | | | | | | | | | | | 3. Typing term (x).#get
+//│ | | | | | | | | | | | | 3. Typing term x
+//│ | | | | | | | | | | | | 3. : x184'''
+//│ | | | | | | | | | | | | CONSTRAIN x184''' <! {#get: #get185'''}
+//│ | | | | | | | | | | | |   where 
+//│ 		x184''' <: #Some<Object,Option>
+//│ | | | | | | | | | | | | 3. C x184''' <! {#get: #get185'''}    (0)
+//│ | | | | | | | | | | | | | NEW x184''' UB (3)
+//│ | | | | | | | | | | | 3. : #get185'''
+//│ | | | | | | | | | | 3. : (#get185''',)
+//│ | | | | | | | | | 3. : (#get185''',)
+//│ | | | | | | | | | Inferred poly constr: (x184''' -> (#get185''',))  —— where 
+//│ 		x184''' <: {#get: #get185'''} & #Some<Object,Option>
+//│ | | | | | | | | 2. : ‹∀ 2. (x184''' -> (#get185''',))›
+//│ | | | | | | | 2. : ‹∀ 2. (x184''' -> (#get185''',))›
+//│ | | | | | | | 2. Typing term x
+//│ | | | | | | | 2. : ((x177' & #Some<Object,Option>) & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')})
+//│ | | | | | | | CONSTRAIN ‹∀ 2. (x184''' -> (#get185''',))› <! (((x177' & #Some<Object,Option>) & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}) -> α186'')
+//│ | | | | | | |   where 
+//│ 		x177' <: Object
+//│ 		T34_178' <: T34_179'
+//│ 		x184''' <: {#get: #get185'''} & #Some<Object,Option>
+//│ | | | | | | | 2. C ‹∀ 2. (x184''' -> (#get185''',))› <! (((x177' & #Some<Object,Option>) & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}) -> α186'')    (0)
+//│ | | | | | | | | could be distribbed: Set(#get185''')
+//│ | | | | | | | | cannot be distribbed: Set(x184''', #get185''')
+//│ | | | | | | | | INST [2]   ‹∀ 2. (x184''' -> (#get185''',))›
+//│ | | | | | | | |   where  
+//│ 		x184''' <: {#get: #get185'''} & #Some<Object,Option>
+//│ | | | | | | | | TO [2] ~>  (x184_187'' -> (#get185_188'',))
+//│ | | | | | | | |   where  
+//│ 		x184_187'' <: {#get: #get185_188''} & #Some<Object,Option>
+//│ | | | | | | | | 2. C (x184_187'' -> (#get185_188'',)) <! (((x177' & #Some<Object,Option>) & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}) -> α186'')    (2)
+//│ | | | | | | | | | 2. C (((x177' & #Some<Object,Option>) & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}),) <! (x184_187'',)    (2)
+//│ | | | | | | | | | | 2. C ((x177' & #Some<Object,Option>) & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}) <! x184_187''    (3)
+//│ | | | | | | | | | | | NEW x184_187'' LB (2)
+//│ | | | | | | | | | | | 2. C ((x177' & #Some<Object,Option>) & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}) <! {#get: #get185_188''}    (6)
+//│ | | | | | | | | | | | | 2. ARGH  DNF(2, #Some<Object,Option>{Some#T: mut (T34_178' | ‘T180'')..(‘T180'' & T34_179')}∧x177')  <!  DNF(2, {#get: #get185_188''})
+//│ | | | | | | | | | | | | | DNF DISCHARGE CONSTRAINTS
+//│ | | | | | | | | | | | | | Consider #Some<Object,Option>{Some#T: mut (T34_178' | ‘T180'')..(‘T180'' & T34_179')} <: DNF(2, {#get: #get185_188''})
+//│ | | | | | | | | | | | | | Possible: List({#get: #get185_188''})
+//│ | | | | | | | | | | | | | 2. A  #Some<Object,Option>{Some#T: mut (T34_178' | ‘T180'')..(‘T180'' & T34_179')}  %  List()  <!  List({#get: #get185_188''})  %  ⊥
+//│ | | | | | | | | | | | | | | 2. A  #Some<Object,Option>{Some#T: mut (T34_178' | ‘T180'')..(‘T180'' & T34_179')}  %  List()  <!  List()  %  {#get:#get185_188''}
+//│ | | | | | | | | | | | | | | | 2. A  #Some<Object,Option>{Some#T: mut (T34_178' | ‘T180'')..(‘T180'' & T34_179')}  %  List()  <!  List()  %  |{#get:#get185_188''}
+//│ | | | | | | | | | | | | | | | | Looking up field #get in Some(Some) & TreeSet() & {...}
+//│ | | | | | | | | | | | | | | | | | Lookup Some.get : Some(‘T34') where 
+//│ | | | | | | | | | | | | | | | | | Lookup: Found mut (T34_178' | ‘T180'')..(‘T180'' & T34_179')
+//│ | | | | | | | | | | | | | | | | | Fresh[0] Some.get : Some((T34_178' | ‘T180'')..(‘T180'' & T34_179')) where Some(
+//│ 		T34_178' <: T34_179')
+//│ | | | | | | | | | | | | | | | | |   & None  (from refinement)
+//│ | | | | | | | | | | | | | | | | 2. C (T34_178' | ‘T180'')..(‘T180'' & T34_179') <! #get185_188''    (5)
+//│ | | | | | | | | | | | | | | | | | 2. C (‘T180'' & T34_179') <! #get185_188''    (8)
+//│ | | | | | | | | | | | | | | | | | | NEW #get185_188'' LB (2)
+//│ | | | | | | | | | | | 2. C ((x177' & #Some<Object,Option>) & {Some#T: mut (T34_178' | ‘T180'')..(T34_179' & ‘T180'')}) <! #Some<Object,Option>    (6)
+//│ | | | | | | | | | | | | Already a subtype by <:<
+//│ | | | | | | | | | 2. C (#get185_188'',) <! α186''    (2)
+//│ | | | | | | | | | | NEW α186'' LB (2)
+//│ | | | | | | 2. : α186''
+//│ | | | | | | CONSTRAIN ([g182'',] -> x183'') <! (α186'' -> α189'')
+//│ | | | | | |   where 
+//│ 		g182'' <: {x: x183''}
+//│ 		α186'' :> (#get185_188'',)
+//│ 		#get185_188'' :> (‘T180'' & T34_179')
+//│ | | | | | | 2. C ([g182'',] -> x183'') <! (α186'' -> α189'')    (0)
+//│ | | | | | | | 2. C (α186'',) <! ((g182'',),)    (1)
+//│ | | | | | | | | 2. C α186'' <! (g182'',)    (2)
+//│ | | | | | | | | | NEW α186'' UB (2)
+//│ | | | | | | | | | 2. C (#get185_188'',) <! (g182'',)    (4)
+//│ | | | | | | | | | | 2. C #get185_188'' <! g182''    (4)
+//│ | | | | | | | | | | | NEW #get185_188'' UB (2)
+//│ | | | | | | | | | | | 2. C (‘T180'' & T34_179') <! g182''    (6)
+//│ | | | | | | | | | | | | NEW g182'' LB (2)
+//│ | | | | | | | | | | | | 2. C (‘T180'' & T34_179') <! {x: x183''}    (8)
+//│ | | | | | | | | | | | | | 2. ARGH  DNF(2, {}∧‘T180''∧T34_179')  <!  DNF(2, {x: x183''})
+//│ | | | | | | | | | | | | | | DNF DISCHARGE CONSTRAINTS
+//│ | | | | | | | | | | | | | | Consider {}∧‘T180'' <: DNF(2, {x: x183''})
+//│ | | | | | | | | | | | | | | Possible: List({x: x183''})
+//│ | | | | | | | | | | | | | | 2. A  {}∧‘T180''  %  List()  <!  List({x: x183''})  %  ⊥
+//│ | | | | | | | | | | | | | | | 2. A  {}∧‘T180''  %  List()  <!  List()  %  {x:x183''}
+//│ | | | | | | | | | | | | | | | | 2. A  {}∧‘T180''  %  List()  <!  List()  %  |{x:x183''}
+//│ | | | | | | | | | | | | | | | | | Looking up field x in None & TreeSet(‘T180'') & {...}
+//│ | | | | | | | | | | | | | | | | | |   & None  (from refinement)
+//│ | | | | | | | | | | | | | | | | | | allVarPols: +T34_180''
+//│ | | | | | | | | | | | | | | | | | | normLike[+] ‘T180''
+//│ | | | | | | | | | | | | | | | | | | | norm[+] ‘T180''
+//│ | | | | | | | | | | | | | | | | | | | | DNF: DNF(2, {}∧‘T180'')
+//│ | | | | | | | | | | | | | | | | | | | ~> ‘T180''
+//│ | | | | | | | | | | | | | | | | | | CONSTRAIN #error<> <! α189''
+//│ | | | | | | | | | | | | | | | | | |   where 
+//│ | | | | | | | | | | | | | | | | | | 2. C #error<> <! α189''    (0)
+//│ | | | | | | | | | | | | | | | | | | | NEW α189'' LB (0)
+//│ ╔══[ERROR] Type `T` does not contain member `x`
+//│ ║  l.46: 	  Some(g) then g.x
+//│ ╙──      	                ^^
+//│ | | | | | | | | | | | | | | | | | 2. C #error<> <! x183''    (7)
+//│ | | | | | | | | | | | | | | | | | | NEW x183'' LB (0)
+//│ | | | | | | | 2. C x183'' <! α189''    (1)
+//│ | | | | | | | | NEW x183'' UB (2)
+//│ | | | | | | | | 2. C #error<> <! α189''    (3)
+//│ | | | | | | | | | NEW α189'' LB (0)
+//│ | | | | | 2. : α189''
+//│ | | | | | CONSTRAIN α189'' <! α181'
+//│ | | | | |   where 
+//│ 		α189'' :> #error<> | #error<>
+//│ | | | | | 2. C α189'' <! α181'    (0)
+//│ | | | | | | NEW α189'' UB (1)
+//│ | | | | | | 2. C #error<> <! α181'    (2)
+//│ | | | | | | | NEW α181' LB (0)
+//│ | | | | | | 2. C #error<> <! α181'    (2)
+//│ | | | | | | | Cached!
+//│ | | | | | CONSTRAIN x177' <! (#Some<Object,Option> & {Some#T: mut T34_178'..T34_179'})
+//│ | | | | |   where 
+//│ 		x177' <: Object
+//│ 		T34_178' <: T34_179'
+//│ | | | | | 1. C x177' <! (#Some<Object,Option> & {Some#T: mut T34_178'..T34_179'})    (0)
+//│ | | | | | | NEW x177' UB (1)
+//│ | | | | 1. : α181'
+//│ | | | 1. : α181'
+//│ | | 1. : (x177' -> α181')
+//│ | | CONSTRAIN (x177' -> α181') <! getOr190'
+//│ | |   where 
+//│ 		x177' <: (#Some<Object,Option> & {Some#T: mut T34_178'..T34_179'}) & Object
+//│ 		T34_178' <: T34_179'
+//│ 		α181' :> #error<>
+//│ | | 1. C (x177' -> α181') <! getOr190'    (0)
+//│ | | | NEW getOr190' LB (1)
+//│ | Completed TypedNuFun(0,fun getOr = (x::14,) => if x is ‹(Some(g,)) then (g).x›,(x177' -> α181')) where 
+//│ 		x177' <: (#Some<Object,Option> & {Some#T: mut T34_178'..T34_179'}) & Object
+//│ 		T34_178' <: T34_179'
+//│ 		α181' :> #error<>
+//│ | Typing unit statements
+//│ | : None
+//│ ======== TYPED ========
+//│ fun getOr: ‹∀ 0. (x177' -> α181')› where 
+//│ |		x177' <: (#Some<Object,Option> & {Some#T: mut T34_178'..T34_179'}) & Object
+//│ |		T34_178' <: T34_179'
+//│ |		α181' :> #error<>
+//│ fun getOr: Some[anything] -> error
 

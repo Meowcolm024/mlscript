@@ -60,9 +60,19 @@ fun test(f: Foo) = if f is
 
 fun test(f: Foo['a]) = if f is
   Foo then f.x : f.T
-//│ fun test: forall 'a. (f: Foo['a]) -> (??T & 'a & (Int | Str))
-//│   where
-//│     'a :> ~??T & ~'a & (Int | Str)
+//│ ╔══[ERROR] Type mismatch in type ascription:
+//│ ║  l.62: 	  Foo then f.x : f.T
+//│ ║        	           ^^^
+//│ ╟── type `Str` does not match type `'a | ?T | ?T0 | T`
+//│ ║  l.23: 	abstract class Baz extends Foo[Str]
+//│ ║        	                               ^^^
+//│ ╟── but it flows into field selection with expected type `'a | ?T1 | ?T2 | T`
+//│ ║  l.62: 	  Foo then f.x : f.T
+//│ ║        	           ^^^
+//│ ╟── Note: constraint arises from type selection:
+//│ ║  l.62: 	  Foo then f.x : f.T
+//│ ╙──      	                  ^^
+//│ fun test: forall 'a. (f: Foo['a]) -> ('a & ??T & (Int | Str))
 
 
 
@@ -118,17 +128,17 @@ fun test(f: Foo) = if f is
     Bar then 123 : f.T
     Baz then error
 //│ ╔══[ERROR] Type mismatch in `case` expression:
-//│ ║  l.117: 	fun test(f: Foo) = if f is
+//│ ║  l.127: 	fun test(f: Foo) = if f is
 //│ ║         	                      ^^^^
-//│ ║  l.118: 	    Bar then 123 : f.T
+//│ ║  l.128: 	    Bar then 123 : f.T
 //│ ║         	^^^^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.119: 	    Baz then error
+//│ ║  l.129: 	    Baz then error
 //│ ║         	^^^^^^^^^^^^^^^^^^
 //│ ╟── type `Foo[?]` does not match type `Bar | Baz`
-//│ ║  l.117: 	fun test(f: Foo) = if f is
+//│ ║  l.127: 	fun test(f: Foo) = if f is
 //│ ║         	            ^^^
 //│ ╟── but it flows into reference with expected type `Bar | Baz`
-//│ ║  l.117: 	fun test(f: Foo) = if f is
+//│ ║  l.127: 	fun test(f: Foo) = if f is
 //│ ╙──       	                      ^
 //│ fun test: (f: Foo[in anything out nothing]) -> Int
 
@@ -160,13 +170,13 @@ fun test(f: Foo['a]): f.T = if f is
 :e // expected
 test(error, 1)
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.161: 	test(error, 1)
+//│ ║  l.171: 	test(error, 1)
 //│ ║         	^^^^^^^^^^^^^^
 //│ ╟── argument list of type `[nothing, 1]` does not match type `[f: Foo['a]]`
-//│ ║  l.161: 	test(error, 1)
+//│ ║  l.171: 	test(error, 1)
 //│ ║         	    ^^^^^^^^^^
 //│ ╟── Note: constraint arises from tuple literal:
-//│ ║  l.155: 	fun test(f: Foo['a]): f.T = if f is
+//│ ║  l.165: 	fun test(f: Foo['a]): f.T = if f is
 //│ ╙──       	        ^^^^^^^^^^^^
 //│ error
 //│ res

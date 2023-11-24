@@ -30,6 +30,10 @@ fun f(x, allowNone) =
     is Some(x) and isValid(x) then "good"
     is None() and allowNone then "okay"
     is _ then "bad"
+//│ ╔══[ERROR] Type mismatch in reference:
+//│ ║  l.29: 	  if x
+//│ ║        	     ^
+//│ ╙── reference of type `?a` does not match type `{value: ?value}`
 //│ f: (anything, anything,) -> ("bad" | "good" | "okay")
 //│  = [Function: f1]
 
@@ -57,7 +61,7 @@ fun f(a, b) =
       _ then 7
     else 3
 //│ ╔══[WARNING] Found a redundant else branch
-//│ ║  l.58: 	    else 3
+//│ ║  l.62: 	    else 3
 //│ ╙──      	         ^
 //│ f: (number, number,) -> (0 | 1 | 2 | 7)
 //│  = [Function: f3]

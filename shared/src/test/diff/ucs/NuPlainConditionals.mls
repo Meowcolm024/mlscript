@@ -17,7 +17,16 @@ Pair(0, 1) is Pair(a, b)
 //│     = true
 
 Pair(0, 1) is Pair(0, _)
-//│ Bool
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.19: 	Pair(0, 1) is Pair(0, _)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Object`
+//│ ║  l.4: 	class Pair[A](fst: A, snd: A)
+//│ ║       	              ^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.19: 	Pair(0, 1) is Pair(0, _)
+//│ ╙──      	                   ^
+//│ error | false | true
 //│ res
 //│     = true
 
@@ -32,21 +41,57 @@ fun foo(x) = x is Pair(a, b)
 
 
 Pair(0, 1) is Pair(a, b) and a > b
-//│ Bool
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.43: 	Pair(0, 1) is Pair(a, b) and a > b
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Num`
+//│ ║  l.4: 	class Pair[A](fst: A, snd: A)
+//│ ║       	              ^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.43: 	Pair(0, 1) is Pair(a, b) and a > b
+//│ ╙──      	                             ^
+//│ error | false | true
 //│ res
 //│     = false
 
 if Pair(0, 1) is Pair(a, b) then a > b else false
-//│ Bool
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.57: 	if Pair(0, 1) is Pair(a, b) then a > b else false
+//│ ║        	   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Num`
+//│ ║  l.4: 	class Pair[A](fst: A, snd: A)
+//│ ║       	              ^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.57: 	if Pair(0, 1) is Pair(a, b) then a > b else false
+//│ ╙──      	                                 ^
+//│ error | false | true
 //│ res
 //│     = false
 
 
 fun foo(x) = x is Pair(a, b) and a > b
-//│ fun foo: (Object & ~#Pair | Pair[Num | ~??A]) -> Bool
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.72: 	fun foo(x) = x is Pair(a, b) and a > b
+//│ ║        	             ^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Num`
+//│ ║  l.4: 	class Pair[A](fst: A, snd: A)
+//│ ║       	              ^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.72: 	fun foo(x) = x is Pair(a, b) and a > b
+//│ ╙──      	                                 ^
+//│ fun foo: (Object & ~#Pair | Pair[anything]) -> (error | false | true)
 
 fun foo(x) = if x is Pair(a, b) then a > b else false
-//│ fun foo: (Object & ~#Pair | Pair[Num | ~??A]) -> Bool
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.84: 	fun foo(x) = if x is Pair(a, b) then a > b else false
+//│ ║        	                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Num`
+//│ ║  l.4: 	class Pair[A](fst: A, snd: A)
+//│ ║       	              ^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.84: 	fun foo(x) = if x is Pair(a, b) then a > b else false
+//│ ╙──      	                                     ^
+//│ fun foo: (Object & ~#Pair | Pair[anything]) -> (error | false | true)
 
 
 // TODO proper error
@@ -54,10 +99,10 @@ fun foo(x) = x is
   Pair
   Int
 //│ ╔══[ERROR] illegal pattern
-//│ ║  l.54: 	  Pair
+//│ ║  l.99: 	  Pair
 //│ ║        	  ^^^^
-//│ ║  l.55: 	  Int
-//│ ╙──      	^^^^^
+//│ ║  l.100: 	  Int
+//│ ╙──       	^^^^^
 //│ fun foo: anything -> error
 //│ Code generation encountered an error:
 //│   if expression was not desugared
@@ -67,10 +112,10 @@ fun foo(x) = x is
   Pair(a, b) and a > b
   Int
 //│ ╔══[ERROR] illegal pattern
-//│ ║  l.67: 	  Pair(a, b) and a > b
-//│ ║        	  ^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.68: 	  Int
-//│ ╙──      	^^^^^
+//│ ║  l.112: 	  Pair(a, b) and a > b
+//│ ║         	  ^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.113: 	  Int
+//│ ╙──       	^^^^^
 //│ fun foo: anything -> error
 //│ Code generation encountered an error:
 //│   if expression was not desugared
@@ -79,11 +124,11 @@ fun foo(x) = x is
 fun foo1(x) = x is Pair(a, b) | Int
 fun foo2(x) = x is (Pair(a, b) and a > b) | Int
 //│ ╔══[ERROR] Illegal pattern `|`
-//│ ║  l.79: 	fun foo1(x) = x is Pair(a, b) | Int
-//│ ╙──      	                              ^
+//│ ║  l.124: 	fun foo1(x) = x is Pair(a, b) | Int
+//│ ╙──       	                              ^
 //│ ╔══[ERROR] Illegal pattern `|`
-//│ ║  l.80: 	fun foo2(x) = x is (Pair(a, b) and a > b) | Int
-//│ ╙──      	                                          ^
+//│ ║  l.125: 	fun foo2(x) = x is (Pair(a, b) and a > b) | Int
+//│ ╙──       	                                          ^
 //│ fun foo1: anything -> error
 //│ fun foo2: anything -> error
 //│ Code generation encountered an error:

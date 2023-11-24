@@ -18,19 +18,191 @@ mixin EvalBase {
       Lit(n) then n
       Add(l, r) then this.eval(l) + this.eval(r)
 }
+//│ ╔══[ERROR] Type mismatch in operator application:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.16: 	    else if e is Neg(d) then 0 - this.eval(d)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `A & ?A` is not an instance of type `Object`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ║        	                ^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.16: 	    else if e is Neg(d) then 0 - this.eval(d)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from application:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	                ^^^^^^
 //│ mixin EvalBase() {
-//│   this: {eval: (??A & 'A) -> 'a & (??A0 & 'A0 | ??E & 'E) -> Int}
-//│   fun eval: (Add['E] | Lit | Neg['A0 & (Neg['A] | Object & ~#Neg | ~??A1)]) -> (Int | 'a)
+//│   this: {eval: (??A & ??A0) -> 'a & (??A1 & 'A | ??E & 'E) -> Int}
+//│   fun eval: (Add['E] | Lit | Neg['A]) -> (Int | error | 'a)
 //│ }
 
 // module TestLang extends EvalBase, EvalNeg
 module TestLang extends EvalBase
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??E & ?E` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | Neg[?A] & {Neg#A :> ?A0 <: ?A}`
+//│ ║  l.4: 	class Add<E>(lhs: E, rhs: E)
+//│ ║       	                     ^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `??E` does not contain member `Add#E`
+//│ ║  l.4: 	class Add<E>(lhs: E, rhs: E)
+//│ ╙──     	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??E & ?E` does not match type `Add[?E0] & {Add#E :> ?E1 <: ?E0} | Lit | Neg[?A] & {Neg#A :> ?A0 <: ?A}`
+//│ ║  l.4: 	class Add<E>(lhs: E, rhs: E)
+//│ ║       	                     ^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `??E` does not contain member `Neg#A`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ╙──     	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??E & ?E` does not match type `Add[?E0] & {Add#E :> ?E1 <: ?E0} | Lit | Neg[?A] & {Neg#A :> ?A0 <: ?A}`
+//│ ║  l.4: 	class Add<E>(lhs: E, rhs: E)
+//│ ║       	                     ^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??E & ?E` is not an instance of type `Object`
+//│ ║  l.4: 	class Add<E>(lhs: E, rhs: E)
+//│ ║       	                     ^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.16: 	    else if e is Neg(d) then 0 - this.eval(d)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.17: 	    else if e is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.18: 	      Lit(n) then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^
+//│ ║  l.19: 	      Add(l, r) then this.eval(l) + this.eval(r)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | Neg[?A0] & {Neg#A :> ?A1 <: ?A0}`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#E`
+//│ ║  l.4: 	class Add<E>(lhs: E, rhs: E)
+//│ ╙──     	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | Neg[?A0] & {Neg#A :> ?A1 <: ?A0}`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Neg#A`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ╙──     	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | Neg[?A0] & {Neg#A :> ?A1 <: ?A0}`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.16: 	    else if e is Neg(d) then 0 - this.eval(d)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.17: 	    else if e is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.18: 	      Lit(n) then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^
+//│ ║  l.19: 	      Add(l, r) then this.eval(l) + this.eval(r)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | Neg[?A0] & {Neg#A :> ?A1 <: ?A0}`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Add#E`
+//│ ║  l.4: 	class Add<E>(lhs: E, rhs: E)
+//│ ╙──     	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | Neg[?A0] & {Neg#A :> ?A1 <: ?A0}`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type `??A` does not contain member `Neg#A`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ╙──     	          ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` does not match type `Add[?E] & {Add#E :> ?E0 <: ?E} | Lit | Neg[?A0] & {Neg#A :> ?A1 <: ?A0}`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
+//│ ╔══[ERROR] Type mismatch in type declaration:
+//│ ║  l.43: 	module TestLang extends EvalBase
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── field selection of type `??A & ?A` is not an instance of type `Object`
+//│ ║  l.6: 	class Neg<A>(expr: A)
+//│ ║       	             ^^^^
+//│ ╟── Note: constraint arises from `case` expression:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ║        	       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.16: 	    else if e is Neg(d) then 0 - this.eval(d)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.17: 	    else if e is
+//│ ║        	^^^^^^^^^^^^^^^^
+//│ ║  l.18: 	      Lit(n) then n
+//│ ║        	^^^^^^^^^^^^^^^^^^^
+//│ ║  l.19: 	      Add(l, r) then this.eval(l) + this.eval(r)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── from reference:
+//│ ║  l.15: 	    if e is Neg(Neg(d)) then this.eval(d)
+//│ ╙──      	       ^
 //│ module TestLang {
-//│   fun eval: (Add['E] | Lit | Neg['A]) -> Int
+//│   fun eval: (Add[anything] | Lit | Neg[anything]) -> (Int | error)
 //│ }
-//│ where
-//│   'E <: Add['E] | Lit | Neg['A] | ~??E
-//│   'A <: Add['E] | Lit | Neg['A & (Add['E] | Lit | Neg['A] | ~??A)] | Neg['A] & ~#Neg | ~??A0
 
 
 fun mk(n) = if n is
@@ -43,11 +215,11 @@ fun mk(n) = if n is
 
 :stats
 TestLang.eval(mk(0))
-//│ Int
+//│ Int | error
 //│ res
 //│     = 0
-//│ constrain calls  : 292
-//│ annoying  calls  : 96
-//│ subtyping calls  : 4395
+//│ constrain calls  : 67
+//│ annoying  calls  : 15
+//│ subtyping calls  : 539
 
 

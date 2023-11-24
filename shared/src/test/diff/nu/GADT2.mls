@@ -26,20 +26,26 @@ fun equal(ev, x, y) = if ev is
     IntRep then (x : ev.T) == (y : ev.T)
     BoolRep then ((x : ev.T) && (y : ev.T)) && (not(x : ev.T) && not(y : ev.T))
     PairRep(a, b) then equal(a, fst(x : ev.T), fst(y : ev.T)) && equal(b, snd(x : ev.T), snd(y : ev.T))
-//│ fun equal: forall 'A 'T 'T0 'B 'T1 'B0 'A0. (BoolRep & {T :> 'T0 <: Bool} | BoolRep & ~#BoolRep | BoolRep & ~{PairRep#A :> 'A & 'A0 | ??A <: ??A0 & 'A0} & ~#BoolRep | BoolRep & ~{PairRep#B :> 'B0 & 'B | ??B <: ??B0 & 'B} & ~#BoolRep | IntRep & {T :> 'T0 <: Num} | IntRep & ~#IntRep | IntRep & ~{PairRep#A :> 'A & 'A0 | ??A <: ??A0 & 'A0} & ~#IntRep | IntRep & ~{PairRep#B :> 'B0 & 'B | ??B <: ??B0 & 'B} & ~#IntRep | PairRep[in 'A0 out 'A, in 'B out 'B0] & {PairRep#A :> 'A <: 'A0, PairRep#B :> 'B0 <: 'B} & ~#PairRep | PairRep[in 'A0 out 'A, in 'B out 'B0] & {PairRep#A :> 'A <: 'A0, PairRep#B :> 'B0 <: 'B} & ~{PairRep#A :> 'A & 'A0 | ??A <: ??A0 & 'A0} | PairRep[in 'A0 out 'A, in 'B out 'B0] & {PairRep#A :> 'A <: 'A0, PairRep#B :> 'B0 <: 'B} & ~{PairRep#B :> 'B0 & 'B | ??B <: ??B0 & 'B} | PairRep[in 'A0 out 'A, in 'B out 'B0] & {
-//│   T :> 'T0 <: ['T, 'T1],
-//│   PairRep#A :> 'A <: 'A0,
-//│   #b: Rep['T1],
-//│   #a: Rep['T],
-//│   PairRep#B :> 'B0 <: 'B
-//│ } | PairRep[in 'A0 out 'A, in 'B out 'B0] & {
-//│   T :> 'T0 <: nothing,
-//│   PairRep#A :> 'A <: 'A0,
-//│   #b: Rep['T1],
-//│   #a: Rep['T],
-//│   PairRep#B :> 'B0 <: 'B
-//│ }, 'T0, 'T0) -> Bool
-//│ fun equal: forall 'T2. (Rep['T2], x: 'T2, 'T2) -> Bool
+//│ ╔══[ERROR] Type mismatch in definition:
+//│ ║  l.25: 	fun equal(ev, x, y) = if ev is
+//│ ║        	    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.26: 	    IntRep then (x : ev.T) == (y : ev.T)
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.27: 	    BoolRep then ((x : ev.T) && (y : ev.T)) && (not(x : ev.T) && not(y : ev.T))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ║  l.28: 	    PairRep(a, b) then equal(a, fst(x : ev.T), fst(y : ev.T)) && equal(b, snd(x : ev.T), snd(y : ev.T))
+//│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//│ ╟── type `'T` is not a 2-element tuple
+//│ ║  l.24: 	fun equal: (Rep['T], x: 'T, 'T) -> Bool
+//│ ║        	                        ^^
+//│ ╟── Note: constraint arises from tuple type:
+//│ ║  l.14: 	class PairRep[A, B](val a: Rep[A], val b: Rep[B]) extends Rep[[A, B]]
+//│ ║        	                                                              ^^^^^^
+//│ ╟── from reference:
+//│ ║  l.28: 	    PairRep(a, b) then equal(a, fst(x : ev.T), fst(y : ev.T)) && equal(b, snd(x : ev.T), snd(y : ev.T))
+//│ ╙──      	                                                                              ^
+//│ fun equal: (BoolRep | IntRep | PairRep[in anything out nothing, in anything out nothing], nothing, nothing) -> Bool
+//│ fun equal: forall 'T. (Rep['T], x: 'T, 'T) -> Bool
 
 equal(new IntRep, 1+1, 2)
 //│ Bool
@@ -49,10 +55,10 @@ equal(new IntRep, 1+1, 2)
 :e
 equal(new BoolRep, 1+1, true)
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.50: 	equal(new BoolRep, 1+1, true)
+//│ ║  l.56: 	equal(new BoolRep, 1+1, true)
 //│ ║        	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── operator application of type `Int` is not an instance of `Bool`
-//│ ║  l.50: 	equal(new BoolRep, 1+1, true)
+//│ ║  l.56: 	equal(new BoolRep, 1+1, true)
 //│ ║        	                   ^^^
 //│ ╟── Note: constraint arises from type reference:
 //│ ║  l.13: 	class BoolRep extends Rep[Bool]
@@ -112,16 +118,16 @@ let test1 = Node(Node(Leaf(1), Leaf(2)), Node(Leaf(3), Leaf(4)))
 :e
 let test2 = Node(Leaf(1), Node(Leaf(2), Leaf(3)))
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.113: 	let test2 = Node(Leaf(1), Node(Leaf(2), Leaf(3)))
+//│ ║  l.119: 	let test2 = Node(Leaf(1), Node(Leaf(2), Leaf(3)))
 //│ ║         	            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── type `[?A, ?A]` is not an instance of type `Int`
-//│ ║  l.81: 	class Node[A](val l: Perfect[A], val r: Perfect[A]) extends Perfect[[A, A]]
+//│ ║  l.87: 	class Node[A](val l: Perfect[A], val r: Perfect[A]) extends Perfect[[A, A]]
 //│ ║        	                                                                    ^^^^^^
 //│ ╟── Note: constraint arises from type reference:
-//│ ║  l.80: 	class Leaf(val a: Int) extends Perfect[Int]
+//│ ║  l.86: 	class Leaf(val a: Int) extends Perfect[Int]
 //│ ║        	                                       ^^^
 //│ ╟── Note: type parameter A is defined at:
-//│ ║  l.81: 	class Node[A](val l: Perfect[A], val r: Perfect[A]) extends Perfect[[A, A]]
+//│ ║  l.87: 	class Node[A](val l: Perfect[A], val r: Perfect[A]) extends Perfect[[A, A]]
 //│ ╙──      	           ^
 //│ let test2: Node[out Int | [Int, Int]] | error
 //│ test2
@@ -130,16 +136,16 @@ let test2 = Node(Leaf(1), Node(Leaf(2), Leaf(3)))
 :e
 head(Node(Node(Leaf(1), Leaf(2)), Leaf(3)))
 //│ ╔══[ERROR] Type mismatch in application:
-//│ ║  l.131: 	head(Node(Node(Leaf(1), Leaf(2)), Leaf(3)))
+//│ ║  l.137: 	head(Node(Node(Leaf(1), Leaf(2)), Leaf(3)))
 //│ ║         	     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //│ ╟── type `Int` is not a 2-element tuple
-//│ ║  l.80: 	class Leaf(val a: Int) extends Perfect[Int]
+//│ ║  l.86: 	class Leaf(val a: Int) extends Perfect[Int]
 //│ ║        	                                       ^^^
 //│ ╟── Note: constraint arises from tuple type:
-//│ ║  l.81: 	class Node[A](val l: Perfect[A], val r: Perfect[A]) extends Perfect[[A, A]]
+//│ ║  l.87: 	class Node[A](val l: Perfect[A], val r: Perfect[A]) extends Perfect[[A, A]]
 //│ ║        	                                                                    ^^^^^^
 //│ ╟── Note: type parameter A is defined at:
-//│ ║  l.81: 	class Node[A](val l: Perfect[A], val r: Perfect[A]) extends Perfect[[A, A]]
+//│ ║  l.87: 	class Node[A](val l: Perfect[A], val r: Perfect[A]) extends Perfect[[A, A]]
 //│ ╙──      	           ^
 //│ Int
 //│ res
