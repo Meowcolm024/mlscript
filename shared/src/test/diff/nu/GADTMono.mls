@@ -1,5 +1,5 @@
 :NewDefs
-// :GADTs
+:GADTs
 
 abstract class Option[type T]: None | Some[T]
 module None extends Option[nothing]
@@ -28,3 +28,16 @@ fun get(x) = if x is Some(r) then r else error
 
 fun get(x: Option['a]): x.T = if x is Some(r) then r else error
 //│ fun get: forall 'a. (x: Option['a]) -> 'a
+
+
+
+// Some[?a1] <: Option[?b1]
+
+// Some[?a1] & ?c0 <: Option[?b1]
+// ?c0 <: Option[?b1] | ~Some[?a1]
+
+
+// Some[?a1] & ?c0 <: Bot
+// ?c0 <: ~Some[?a1]
+
+

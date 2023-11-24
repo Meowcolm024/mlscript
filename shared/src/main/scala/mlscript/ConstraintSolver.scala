@@ -338,7 +338,8 @@ class ConstraintSolver extends NormalForms { self: Typer =>
         
         def local(): Unit = { // * Used to return early in simple cases
           
-          vars.headOption match {
+          val boundLevel = lhs.level max rhs.level
+          vars.iterator.filter(_.level >= boundLevel).nextOption() match {
             case S(v) =>
               rec(v, rhs.toType() | Conjunct(lnf, vars - v, rnf, nvars).toType().neg(), true)
             case N =>
@@ -440,8 +441,19 @@ class ConstraintSolver extends NormalForms { self: Typer =>
       (ls, rs) match {
         // If we find a type variable, we can weasel out of the annoying constraint by delaying its resolution,
         // saving it as negations in the variable's bounds!
-        case ((tv: TypeVariable) :: ls, _) => rec(tv, mkRhs(ls), done_ls.isTop && ls.forall(_.isTop))
-        case (_, (tv: TypeVariable) :: rs) => rec(mkLhs(rs), tv, done_rs.isBot && rs.forall(_.isBot))
+        
+        // case ((tv: TypeVariable) :: ls, _) => rec(tv, mkRhs(ls), done_ls.isTop && ls.forall(_.isTop))
+        // case (_, (tv: TypeVariable) :: rs) => rec(mkLhs(rs), tv, done_rs.isBot && rs.forall(_.isBot))
+        
+        case ((tv: TypeVariable) :: ls, _) =>
+          val bound = mkRhs(ls)
+          if (bound.level > tv.level) annoying(ls, done_ls, rs, done_rs)
+          else rec(tv, bound, done_ls.isTop && ls.forall(_.isTop))
+        case (_, (tv: TypeVariable) :: rs) =>
+          val bound = mkLhs(rs)
+          if (bound.level > tv.level) annoying(ls, done_ls, rs, done_rs)
+          else rec(bound, tv, done_rs.isBot && rs.forall(_.isBot))
+        
         case (TypeBounds(lb, ub) :: ls, _) => annoying(ub :: ls, done_ls, rs, done_rs)
         case (_, TypeBounds(lb, ub) :: rs) => annoying(ls, done_ls, lb :: rs, done_rs)
         case (ComposedType(true, ll, lr) :: ls, _) =>
