@@ -29,12 +29,9 @@ class ConstraintSolver extends NormalForms { self: Typer =>
     ErrorReport(
       msg"${info.decl.kind.str.capitalize} `${info.decl.name}` does not contain member `${fld.name}`" -> fld.toLoc :: Nil, newDefs)
   
-  def lookupMember(clsNme: Str, rfnt: Var => Opt[FieldType], fld: Var)
-        (implicit ctx: Ctx, raise: Raise)
+  def lookupMember(clsNme: Str, rfnt: Var => Opt[FieldType], fld: Var)(implicit ctx: Ctx, raise: Raise)
         : Either[Diagnostic, NuMember]
-        = {
-    val info = ctx.tyDefs2.getOrElse(clsNme, ???/*TODO*/)
-    
+        = ctx.tyDefs2.get(clsNme).toRight(ErrorReport(msg"Cannot find class ${clsNme}" -> N :: Nil, newDefs)) flatMap { info =>
     if (info.isComputing) {
       
       ??? // TODO support?
@@ -109,7 +106,7 @@ class ConstraintSolver extends NormalForms { self: Typer =>
                     Nil)
                 S(p.ty)
               case S(m) =>
-                S(err(msg"Access to ${m.kind.str} member not yet supported", fld.toLoc).toUpper(noProv))
+                S(err(msg"Access to ${m.kind.str} member ${fld.name} not yet supported", fld.toLoc).toUpper(noProv))
               case N => N
             }
           
@@ -131,17 +128,20 @@ class ConstraintSolver extends NormalForms { self: Typer =>
         implicit val shadows: Shadows = Shadows.empty
         
         info.tparams.foreach { case (tn, _tv, vi) =>
-          val targ = rfnt(Var(info.decl.name + "#" + tn.name)) match {
+          val targ = rfnt(tparamField(TypeName(info.decl.name), tn, vi.visible)) match {
             // * TODO to avoid infinite recursion due to ever-expanding type args,
             // *  we should set the shadows of the targ to be the same as that of the parameter it replaces... 
-            case S(fty) if vi === S(VarianceInfo.co) => fty.ub
-            case S(fty) if vi === S(VarianceInfo.contra) => fty.lb.getOrElse(BotType)
+            case S(fty) if vi.varinfo === S(VarianceInfo.co) => 
+              println(s"Lookup: Found $fty")
+              fty.ub
+            case S(fty) if vi.varinfo === S(VarianceInfo.contra) => 
+              println(s"Lookup: Found $fty")
+              fty.lb.getOrElse(BotType)
             case S(fty) =>
-              TypeBounds.mk(
-                fty.lb.getOrElse(BotType),
-                fty.ub,
-              )
+              println(s"Lookup: Found $fty")
+              TypeBounds.mk(fty.lb.getOrElse(BotType), fty.ub)
             case N =>
+              println(s"Lookup: field not found, creating new bounds")
               TypeBounds(
                 // _tv.lowerBounds.foldLeft(BotType: ST)(_ | _),
                 // _tv.upperBounds.foldLeft(TopType: ST)(_ & _),
@@ -190,6 +190,9 @@ class ConstraintSolver extends NormalForms { self: Typer =>
     }
     
   }()
+  
+  
+  private val DummyTV: TV = freshVar(noProv, N, S("<DUMMY>"), Nil, Nil, false)(-1)
   
   
   // * Each type has a shadow which identifies all variables created from copying
@@ -669,7 +672,11 @@ class ConstraintSolver extends NormalForms { self: Typer =>
           : SimpleType =
     {
       val originalVars = ty.getVars
-      val res = extrude(ty, lowerLvl, pol, upperLvl)(ctx, MutMap.empty, MutSortMap.empty, reason)
+      
+      // * FIXME ctx.extrCache and ctx.extrCache2 should be indexed by the level of the extrusion!
+      // TODO somehow handle extrCache2
+      val res = extrude(ty, lowerLvl, pol, upperLvl)(ctx, MutSortMap.empty, reason)
+      
       val newVars = res.getVars -- originalVars
       if (newVars.nonEmpty) trace(s"RECONSTRAINING TVs") {
         newVars.foreach {
@@ -725,6 +732,104 @@ class ConstraintSolver extends NormalForms { self: Typer =>
     trace(s"$lvl. C $lhs <! $rhs    (${shadows.size})") {
     // trace(s"$lvl. C $lhs <! $rhs  ${lhs.getClass.getSimpleName}  ${rhs.getClass.getSimpleName}") {
       
+      // def constrainMaxTv(startTV: TV, startLeft: Bool): (TV, ST) = {
+      def constrainMaxTv(startTV: TV, startLeft: Bool): Unit = {
+        // System.out.println("======================")
+        
+        var maxTv = startTV
+        var isLeft = startLeft
+        @tailrec
+        def allComponents(ls: Ls[ST], rs: Ls[ST], done_ls: Ls[ST], done_rs: Ls[ST]): (Ls[ST], Ls[ST]) =
+            ls match {
+            // {System.out.println(ls,rs,done_ls,done_rs); ls} match {
+            // {Thread.sleep(100); System.out.println(ls,rs,done_ls,done_rs); ls} match {
+          case ComposedType(false, l, r) :: ls => allComponents(l :: r :: ls, rs, done_ls, done_rs)
+          case NegType(st) :: ls => allComponents(ls, st :: rs, done_ls, done_rs)
+          case ProvType(st) :: ls => allComponents(st :: ls, rs, done_ls, done_rs)
+          case (tv: TV) :: ls if tv is startTV => allComponents(ls, rs, done_ls, done_rs)
+          case (tv: TV) :: ls if tv.level > maxTv.level =>
+            val oldTv = maxTv
+            val wasLeft = isLeft
+            maxTv = tv
+            isLeft = true
+            // if (oldTv is DummyTV) allComponents(ls, rs, done_ls, done_rs)
+            if (wasLeft) allComponents(ls, rs, oldTv :: done_ls, done_rs)
+            else allComponents(ls, rs, done_ls, oldTv :: done_rs)
+          case st :: ls => allComponents(ls, rs, st :: done_ls, done_rs)
+          case Nil => rs match {
+            case ComposedType(true, l, r) :: rs => allComponents(ls, l :: r :: rs, done_ls, done_rs)
+            case NegType(st) :: rs => allComponents(st :: ls, rs, done_ls, done_rs)
+            case ProvType(st) :: rs => allComponents(ls, st :: rs, done_ls, done_rs)
+            case (tv: TV) :: rs if tv is startTV => allComponents(ls, rs, done_ls, done_rs)
+            case (tv: TV) :: rs if tv.level > maxTv.level =>
+              val oldTv = maxTv
+              val wasLeft = isLeft
+              maxTv = tv
+              isLeft = false
+              // if (oldTv is DummyTV) allComponents(ls, rs, done_ls, done_rs)
+              if (wasLeft) allComponents(ls, rs, oldTv :: done_ls, done_rs)
+              else allComponents(ls, rs, done_ls, oldTv :: done_rs)
+            case r :: rs => allComponents(Nil, rs, done_ls, r :: done_rs)
+            case Nil => (done_ls, done_rs)
+          }
+        }
+        val (ls, rs) = allComponents(lhs :: Nil, rhs :: Nil, Nil, Nil)
+        // if (maxTv isnt DummyTV)
+        // if (isLeft) rec(maxTv, (ls.iterator.map(_.neg()) ++ rs).reduce(_ | _), true)
+        // else rec((ls.iterator ++ rs.iterator.map(_.neg())).reduce(_ & _), maxTv, true)
+        
+        // System.out.println(s"Components: $ls  <<  $rs")
+        
+        
+        
+        /* 
+        if (maxTv is startTV) (maxTv, if (startLeft) rhs else lhs)
+        else if (isLeft) (maxTv, (ls.iterator.map(_.neg()) ++ rs).reduce(_ | _))
+        else (maxTv, (ls.iterator ++ rs.iterator.map(_.neg())).reduce(_ & _))
+        */
+        
+        if (isLeft) {
+          val rhs = (ls.iterator.map(_.neg()) ++ rs).reduce(_ | _) // TODO optimize
+          if (rhs.level > maxTv.level) {
+            println(s"wrong level: ${rhs.level}")
+            if (constrainedTypes && rhs.level <= lvl) {
+              println(s"STASHING $maxTv bound in extr ctx")
+              val buf = ctx.extrCtx.getOrElseUpdate(maxTv, Buffer.empty)
+              buf += false -> rhs
+              cache -= lhs -> rhs
+              ()
+            } else {
+              val rhs2 = extrudeAndCheck(rhs, lhs.level, false, MaxLevel,
+                cctx._1 :: prevCctxs.unzip._1 ::: prevCctxs.unzip._2)
+              println(s"EXTR RHS  ~>  $rhs2  to ${lhs.level}")
+              println(s" where ${rhs2.showBounds}")
+              // println(s"   and ${rhs.showBounds}")
+              rec(lhs, rhs2, true)
+            }
+          } else rec(maxTv, rhs, true)
+        } else {
+          val lhs = (ls.iterator ++ rs.iterator.map(_.neg())).reduce(_ & _) // TODO optimize
+          if (lhs.level > maxTv.level) {
+            println(s"wrong level: ${lhs.level}")
+            if (constrainedTypes && lhs.level <= lvl) {
+              println(s"STASHING $maxTv bound in extr ctx")
+              val buf = ctx.extrCtx.getOrElseUpdate(maxTv, Buffer.empty)
+              buf += true -> lhs
+              cache -= lhs -> rhs
+              ()
+            } else {
+              val lhs2 = extrudeAndCheck(lhs, rhs.level, true, MaxLevel,
+                cctx._2 :: prevCctxs.unzip._2 ::: prevCctxs.unzip._1)
+              println(s"EXTR LHS  ~>  $lhs2  to ${rhs.level}")
+              println(s" where ${lhs2.showBounds}")
+              // println(s"   and ${lhs.showBounds}")
+              rec(lhs2, rhs, true)
+            }
+          } else rec(lhs, maxTv, true)
+        }
+        
+      }
+      
       // shadows.previous.foreach { sh =>
       //   println(s">> $sh   ${sh.hashCode}")
       // }
@@ -745,7 +850,90 @@ class ConstraintSolver extends NormalForms { self: Typer =>
       
       // println(s"  where ${FunctionType(lhs, rhs)(primProv).showBounds}")
       else {
+        /* 
+        @tailrec
+        def findTV(cur: TV, lr: Bool, todo: Ls[ST], l: Ls[ST], r: Ls[ST]): (Ls[ST], Ls[ST]) = todo match {
+          case (tv: TypeVariable) :: todo if tv.level > cur.level =>
+            if (lr) findTV(tv, true, cur :: l, r)
+            else findTV(tv, true, l, cur :: r)
+          case ComposedType(true, l, r) :: todo =>
+            findTV(l :: r :: todo, done)
+          case ProxyType(st) :: todo =>
+            findTV(st :: todo, l, r)
+          case NegType(st) :: todo =>
+            findTV(todo, st :: l, r)
+          case st :: todo =>
+            findTV(todo, l, st :: r)
+          case Nil => N
+        }
+        val (tv, lr, ls, rs) = findTV(DummyTV, rhs :: Nil, Nil, Nil)
+        if (tv isnt DummyTV)
+          if (lr) return ()
+          else return ()
+        */
+        /* 
+        val maxLevel = 
+        val ucs = lhs.components(true)
+        ucs.iterator.collect { case tv: TV => tv }.maxByOption(_.level) match {
+          case S(tv) if tv.level >= lhs.level max rhs.level =>
+            println(s"NEW $tv UB (${rhs.level})")
+            val newBound = (cctx._1 ::: cctx._2.reverse).foldRight(rhs)((c, ty) =>
+              if (c.prov is noProv) ty else mkProxy(ty, c.prov))
+            tv.upperBounds ::= newBound // update the bound
+            tv.lowerBounds.foreach(rec(_, rhs, true)) // propagate from the bound
+          case _ =>
+        }
+        val ics = lhs.components(false)
+        */
+        // lhs.components(true)
+        // val cs = (lhs & NegType(rhs)(noProv)).components(true)
+        
         val lhs_rhs = lhs -> rhs
+        /* 
+        lhs_rhs match {
+          // case (_: TV, _) | (_, _: TV) =>
+          case (lhs: TV, rhs) if lhs.level >= rhs.level =>
+          case (_, rhs: TV) if lhs.level <= rhs.level =>
+          case _ =>
+            var maxTv = DummyTV
+            var isLeft = true
+            @tailrec
+            def allComponents(ls: Ls[ST], rs: Ls[ST], done_ls: Ls[ST], done_rs: Ls[ST]): (Ls[ST], Ls[ST]) = ls match {
+              case ComposedType(true, l, r) :: ls => allComponents(l :: r :: ls, rs, done_ls, done_rs)
+              case NegType(st) :: ls => allComponents(ls, st :: rs, done_ls, done_rs)
+              case ProvType(st) :: ls => allComponents(st :: ls, rs, done_ls, done_rs)
+              case (tv: TV) :: ls if tv.level > maxTv.level =>
+                val oldTv = maxTv
+                val wasLeft = isLeft
+                maxTv = tv
+                isLeft = true
+                if (oldTv is DummyTV) allComponents(ls, rs, done_ls, done_rs)
+                else if (wasLeft) allComponents(ls, rs, oldTv :: done_ls, done_rs)
+                else allComponents(ls, rs, done_ls, oldTv :: done_rs)
+              case st :: ls => allComponents(ls, rs, st :: done_ls, done_rs)
+              case Nil => rs match {
+                case ComposedType(false, l, r) :: ls => allComponents(ls, l :: r :: rs, done_ls, done_rs)
+                case NegType(st) :: rs => allComponents(st :: ls, rs, done_ls, done_rs)
+                case ProvType(st) :: ls => allComponents(ls, st :: rs, done_ls, done_rs)
+                case (tv: TV) :: rs if tv.level > maxTv.level =>
+                  val oldTv = maxTv
+                  val wasLeft = isLeft
+                  maxTv = tv
+                  isLeft = false
+                  if (oldTv is DummyTV) allComponents(ls, rs, done_ls, done_rs)
+                  else if (wasLeft) allComponents(ls, rs, oldTv :: done_ls, done_rs)
+                  else allComponents(ls, rs, done_ls, oldTv :: done_rs)
+                case r :: rs => allComponents(Nil, rs, done_ls, r :: done_rs)
+                case Nil => (done_ls, done_rs)
+              }
+            }
+            val (ls, rs) = allComponents(lhs :: Nil, rhs :: Nil, Nil, Nil)
+            if (maxTv isnt DummyTV)
+              if (isLeft) return rec(maxTv, (ls.iterator.map(_.neg()) ++ rs).reduce(_ | _), true)
+              else return rec((ls.iterator ++ rs.iterator.map(_.neg())).reduce(_ & _), maxTv, true)
+        }
+        */
+        
         (lhs_rhs match {
           case (_: ProvType, _) | (_, _: ProvType) => shadows
           // * Note: contrary to Simple-sub, we do have to remember subtyping tests performed
@@ -826,7 +1014,6 @@ class ConstraintSolver extends NormalForms { self: Typer =>
           case (lhs, tv @ AssignedVariable(rhs)) =>
             rec(lhs, rhs, true)
             
-            
           case (lhs: TypeVariable, rhs) if rhs.level <= lhs.level =>
             println(s"NEW $lhs UB (${rhs.level})")
             val newBound = (cctx._1 ::: cctx._2.reverse).foldRight(rhs)((c, ty) =>
@@ -842,8 +1029,47 @@ class ConstraintSolver extends NormalForms { self: Typer =>
             rhs.upperBounds.foreach(rec(lhs, _, true)) // propagate from the bound
             
             
-          case (lhs: TypeVariable, rhs) =>
-            val tv = lhs
+          case (lhs: TypeVariable, _rhs) =>
+            // val tv = lhs
+            /* 
+            /* 
+            def findBetterTV(todo: Ls[ST], done: Ls[ST]): Opt[(TV, Ls[ST])] = todo match {
+              case (tv: TypeVariable) :: todo if tv.level > lhs.level =>
+                S(tv, todo ::: done)
+              case ComposedType(true, l, r) :: todo =>
+                findBetterTV(l :: r :: todo, done)
+              case ProxyType(st) :: todo =>
+                findBetterTV(st :: todo, done)
+              case st :: todo =>
+                findBetterTV(todo, st :: done)
+              case Nil => N
+            }
+            findBetterTV(rhs :: Nil, Nil) match {
+              case S((tv, ts)) =>
+                rec(ts.foldLeft(lhs: ST)(_ & _), tv, true)
+              case N =>
+            }
+            */
+            def findBetterTV(todo: Ls[ST], l: Ls[ST], r: Ls[ST]): Opt[(ST, ST)] = todo match {
+              case (tv: TypeVariable) :: todo if tv.level > lhs.level =>
+                S(tv, todo ::: done)
+              case ComposedType(true, l, r) :: todo =>
+                findBetterTV(l :: r :: todo, done)
+              case ProxyType(st) :: todo =>
+                findBetterTV(st :: todo, l, r)
+              case NegType(st) :: todo =>
+                findBetterTV(todo, st :: l, r)
+              case st :: todo =>
+                findBetterTV(todo, l, st :: r)
+              case Nil => N
+            }
+            findBetterTV(rhs :: Nil, Nil, Nil)
+              .foreach { case (l, r) => rec(l, r, true) }
+             */
+            /* 
+            val (tv, rhs) = constrainMaxTv(lhs, true)
+            if (rhs.level <= tv.level) return rec(tv, rhs, true)
+            
             println(s"wrong level: ${rhs.level}")
             if (constrainedTypes && rhs.level <= lvl) {
               println(s"STASHING $tv bound in extr ctx")
@@ -859,9 +1085,15 @@ class ConstraintSolver extends NormalForms { self: Typer =>
               // println(s"   and ${rhs.showBounds}")
               rec(lhs, rhs2, true)
             }
+            */
+            constrainMaxTv(lhs, true)
             
           case (lhs, rhs: TypeVariable) =>
-            val tv = rhs
+            // val tv = rhs
+            /* 
+            val (tv, lhs) = constrainMaxTv(rhs, false)
+            if (lhs.level <= tv.level) return rec(lhs, tv, true)
+            
             println(s"wrong level: ${lhs.level}")
             if (constrainedTypes && lhs.level <= lvl) {
               println(s"STASHING $tv bound in extr ctx")
@@ -877,7 +1109,8 @@ class ConstraintSolver extends NormalForms { self: Typer =>
               // println(s"   and ${lhs.showBounds}")
               rec(lhs2, rhs, true)
             }
-            
+            */
+            constrainMaxTv(rhs, false)
             
           case (TupleType(fs0), TupleType(fs1)) if fs0.size === fs1.size => // TODO generalize (coerce compatible tuples)
             fs0.lazyZip(fs1).foreach { case ((ln, l), (rn, r)) =>
@@ -1313,7 +1546,7 @@ class ConstraintSolver extends NormalForms { self: Typer =>
     * `upperLvl` tracks the lowest such current quantification level. */
   private final
   def extrude(ty: SimpleType, lowerLvl: Int, pol: Boolean, upperLvl: Level)
-        (implicit ctx: Ctx, cache: MutMap[TypeVarOrRigidVar->Bool, TypeVarOrRigidVar], cache2: MutSortMap[TraitTag, TraitTag], reason: Ls[Ls[ST]])
+        (implicit ctx: Ctx, cache2: MutSortMap[TraitTag, TraitTag], reason: Ls[Ls[ST]])
         : SimpleType =
   // (trace(s"EXTR[${printPol(S(pol))}] $ty || $lowerLvl .. $upperLvl  ${ty.level} ${ty.level <= lowerLvl}"){
     if (ty.level <= lowerLvl) ty else ty match {
@@ -1328,9 +1561,9 @@ class ConstraintSolver extends NormalForms { self: Typer =>
         ArrayType(ar.update(extrude(_, lowerLvl, !pol, upperLvl), extrude(_, lowerLvl, pol, upperLvl)))(t.prov)
       case w @ Without(b, ns) => Without(extrude(b, lowerLvl, pol, upperLvl), ns)(w.prov)
       case tv @ AssignedVariable(ty) =>
-        cache.getOrElse(tv -> true, {
+        ctx.extrCache.getOrElse(tv -> true, {
           val nv = freshVar(tv.prov, S(tv), tv.nameHint)(lowerLvl)
-          cache += tv -> true -> nv
+          ctx.extrCache.set(tv -> true, nv)
           val tyPos = extrude(ty, lowerLvl, true, upperLvl)
           val tyNeg = extrude(ty, lowerLvl, false, upperLvl)
           if (tyPos === tyNeg)
@@ -1343,25 +1576,27 @@ class ConstraintSolver extends NormalForms { self: Typer =>
           }
           nv
         })
+        /* // !!!!!!!!!!!!!!!!!!!!!!!!!!! not valid in the presence of skolems and reconstraining?!
       case tv: TypeVariable if tv.level > upperLvl =>
-        assert(!cache.contains(tv -> false), (tv, cache))
+        assert(!ctx.extrCache.contains(tv -> false), (tv, ctx.extrCache.cache.get(lvl)))
         // * If the TV's level is strictly greater than `upperLvl`,
         // *  it means the TV is quantified by a type being copied,
         // *  so all we need to do is copy this TV along (it is not extruded).
         // * We pick `tv -> true` (and not `tv -> false`) arbitrarily.
         if (tv.lowerBounds.isEmpty && tv.upperBounds.isEmpty) tv
-        else cache.getOrElse(tv -> true, {
+        else ctx.extrCache.getOrElse(tv -> true, {
           val nv = freshVar(tv.prov, S(tv), tv.nameHint)(tv.level)
-          cache += tv -> true -> nv
+          ctx.extrCache.set(tv -> true, nv)
           nv.lowerBounds = tv.lowerBounds.map(extrude(_, lowerLvl, true, upperLvl))
           nv.upperBounds = tv.upperBounds.map(extrude(_, lowerLvl, false, upperLvl))
           nv
         })
+        */
       case t @ SpliceType(fs) => 
         t.updateElems(extrude(_, lowerLvl, pol, upperLvl), extrude(_, lowerLvl, !pol, upperLvl), extrude(_, lowerLvl, pol, upperLvl), t.prov)
-      case tv: TypeVariable => cache.getOrElse(tv -> pol, {
+      case tv: TypeVariable => ctx.extrCache.getOrElse(tv -> pol, {
         val nv = freshVar(tv.prov, S(tv), tv.nameHint)(lowerLvl)
-        cache += tv -> pol -> nv
+        ctx.extrCache.set(tv -> pol, nv)
         if (pol) {
           tv.upperBounds ::= nv
           nv.lowerBounds = tv.lowerBounds.map(extrude(_, lowerLvl, pol, upperLvl))
@@ -1507,11 +1742,33 @@ class ConstraintSolver extends NormalForms { self: Typer =>
       
       case tv @ AssignedVariable(ty) =>
         freshened.getOrElse(tv, {
-          val nv = freshVar(tv.prov, S(tv), tv.nameHint)(if (tv.level > below) tv.level else lvl)
+          val nv = freshVar(tv.prov, S(tv), tv.nameHint)(if (tv.level > below) tv.level else {
+            assert(lvl <= below, "this condition should be false for the result to be correct")
+            lvl
+          })
           freshened += tv -> nv
           val ty2 = freshen(ty)
-          nv.assignedTo = S(ty2)
-          nv
+          val l = ty2.level
+          if (l <= nv.level) {
+            // * Normal case.
+            nv.assignedTo = S(ty2)
+            nv
+          } else {
+            // * Ouch... Freak case.
+            // * Because tv could be recursive and refer to itself,
+            // * in the general case we must do the freshening from scratch.
+            // * This is obviously horrible and could lead to pathological complexity;
+            // * but I believe it only occurs in freak cases related to `freshen` being (ab)used
+            // * to instantiate some skolems to type arguments whose levels happen to be bigger than ctx.lvl.
+            // * As of this commit, it seems this case is only triggered by shared/src/test/diff/nu/Eval.mls.
+            // * Eventually we'll want to fix this by making ctx.lvl agree
+            // * with whatever is substituted by freshening.
+            val nv = freshVar(tv.prov, S(tv), tv.nameHint)(l)
+            freshened += tv -> nv
+            val ty2 = freshen(ty)
+            nv.assignedTo = S(ty2)
+            nv
+          }
         })
       
       // * Note: I forgot why I though this was unsound...

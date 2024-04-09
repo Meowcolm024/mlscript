@@ -316,7 +316,7 @@ abstract class TyperDatatypes extends TyperHelpers { Typer: Typer =>
       elems.map{ case L(l) => l.levelBelow(ub) case R(r) => r.levelBelow(ub) }.max
     
     lazy val inner: FieldType = elems.map {
-      case L(l) => l match { case a: ArrayBase => a.inner case _ => ??? }
+      case L(l) => l match { case a: ArrayBase => a.inner case _ => die }
       case R(r) => r
     }.reduceLeft(_ || _)
 
@@ -332,9 +332,9 @@ abstract class TyperDatatypes extends TyperHelpers { Typer: Typer =>
     override def toString = if (pol) "⊥" else "⊤"
   }
   
-  /** Represents a type variable skolem that was extruded outsdie its polym level.
+  /** Represents a type variable skolem that was extruded outside its polym level.
     * The goal is to retain precise information to produce good errors,
-    * but still have this be functionally equivalent to `ExtrType(pol)`. */
+    * but still have this be functionally equivalent to `ExtrType(!pol)`. */
   case class Extruded(pol: Bool, underlying: SkolemTag)(val prov: TypeProvenance, val reason: Ls[Ls[ST]]) extends AbstractTag with TypeVarOrRigidVar {
     val level: Level = MinLevel
     val id = underlying.id
@@ -416,6 +416,8 @@ abstract class TyperDatatypes extends TyperHelpers { Typer: Typer =>
     def compare(that: TypeTag): Int = (this, that) match {
       case (obj1: ObjectTag, obj2: ObjectTag) => obj1.id compare obj2.id
       case (SkolemTag(id1), SkolemTag(id2)) => id1 compare id2
+      case (Extruded(true, id1), Extruded(false, id2)) => -1
+      case (Extruded(false, id1), Extruded(true, id2)) => 1
       case (Extruded(_, id1), Extruded(_, id2)) => id1 compare id2
       case (_: ObjectTag, _: SkolemTag | _: Extruded) => -1
       case (_: SkolemTag | _: Extruded, _: ObjectTag) => 1
@@ -478,12 +480,12 @@ abstract class TyperDatatypes extends TyperHelpers { Typer: Typer =>
     override def toString = s"$lb..$ub"
   }
   object TypeBounds {
-    final def mkSimple(lb: SimpleType, ub: SimpleType, prov: TypeProvenance = noProv): SimpleType = (lb, ub) match {
+    def mkSimple(lb: SimpleType, ub: SimpleType, prov: TypeProvenance = noProv): SimpleType = (lb, ub) match {
       case (TypeBounds(lb, _), ub) => mkSimple(lb, ub, prov)
       case (lb, TypeBounds(_, ub)) => mkSimple(lb, ub, prov)
       case _ => TypeBounds(lb, ub)(prov)
     }
-    final def mk(lb: SimpleType, ub: SimpleType, prov: TypeProvenance = noProv)(implicit ctx: Ctx): SimpleType =
+    def mk(lb: SimpleType, ub: SimpleType, prov: TypeProvenance = noProv)(implicit ctx: Ctx): SimpleType =
       if ((lb is ub)
         || lb === ub
         || !lb.mentionsTypeBounds && !ub.mentionsTypeBounds && lb <:< ub && ub <:< lb
@@ -495,7 +497,7 @@ abstract class TyperDatatypes extends TyperHelpers { Typer: Typer =>
       * (in particular, the `transform` function may replace TV bounds `TypeBound` bundles,
       * and creating these `TypeBound`s should NOT rely on the bounds still being there at the time
       * the bundle is constructed). */
-    final def mkSafe(lb: SimpleType, ub: SimpleType, prov: TypeProvenance = noProv)(implicit ctx: Ctx): SimpleType =
+    def mkSafe(lb: SimpleType, ub: SimpleType, prov: TypeProvenance = noProv)(implicit ctx: Ctx): SimpleType =
       if ((lb is ub)
         || lb === ub
       ) lb else (lb, ub) match {
@@ -555,7 +557,7 @@ abstract class TyperDatatypes extends TyperHelpers { Typer: Typer =>
     private var _assignedTo: Opt[ST] = N
     def assignedTo: Opt[ST] = _assignedTo
     def assignedTo_=(value: Opt[ST]): Unit = {
-      require(value.forall(_.level <= level))
+      require(value.forall(_.level <= level), (this, value))
       _assignedTo = value
     }
     
